@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ahimsa – Download the App</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f0fffe;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        text-align: center;
+        color: #2d4a52;
+      }
+      .card {
+        padding: 40px 32px;
+        max-width: 360px;
+      }
+      h1 { font-size: 28px; letter-spacing: 4px; margin-bottom: 8px; }
+      p  { color: #5a7a82; margin-bottom: 32px; }
+      a {
+        display: block;
+        padding: 14px 24px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+      .ios     { background: #008aa1; color: #fff; }
+      .android { background: #2d4a52; color: #fff; }
+    </style>
+    <script>
+      (function () {
+        var ua = navigator.userAgent || "";
+        if (/android/i.test(ua)) {
+          window.location.replace(
+            "https://play.google.com/store/apps/details?id=com.nstoilov.ahimsa"
+          );
+        } else if (/iphone|ipad|ipod/i.test(ua)) {
+          window.location.replace(
+            "https://apps.apple.com/bg/app/ahimsa-app/id6751274772"
+          );
+        }
+        // Desktop — fall through to show both buttons
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="card">
+      <h1>ΛHIMSΛ</h1>
+      <p>Изтеглете приложението за вашето устройство</p>
+      <a class="ios" href="https://apps.apple.com/bg/app/ahimsa-app/id6751274772">
+        Download on the App Store
+      </a>
+      <a class="android" href="https://play.google.com/store/apps/details?id=com.nstoilov.ahimsa">
+        Get it on Google Play
+      </a>
+    </div>
+  </body>
+</html>
