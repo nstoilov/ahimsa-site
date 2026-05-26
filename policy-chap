@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width'>
+  <title>Privacy Policy</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      padding: 1em;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<strong>Privacy Policy</strong>
+
+<p>
+This privacy policy applies to the Chap app (hereby referred to as the "Application")
+for mobile devices that was created by Nikolay Stoilov (hereby referred to as the
+"Service Provider") as a service. This service is intended for use "AS IS".
+</p>
+
+<br>
+
+<strong>Information Collection and Use</strong>
+
+<p>
+The Application does not require account creation or login.
+The Service Provider does not collect personally identifiable information such as
+your name, email address, or phone number through the Application.
+</p>
+
+<p>
+When you use the Application, text, messages, or prompts you submit may be sent to
+third-party AI model providers in order to generate translations or responses.
+These requests are processed only for providing the functionality of the Application.
+</p>
+
+<p>
+The Application may automatically collect limited technical information, including:
+</p>
+
+<ul>
+  <li>Your device's Internet Protocol address (e.g. IP address)</li>
+  <li>Device type and operating system version</li>
+  <li>Crash logs and diagnostic information</li>
+  <li>General usage statistics related to Application performance</li>
+</ul>
+
+<p>
+The Application does not collect precise location information.
+</p>
+
+<br>
+
+<strong>AI Processing</strong>
+
+<p>
+To provide its features, the Application sends user-submitted text to external AI
+service providers for processing. These providers may temporarily process requests
+to generate translations or responses.
+</p>
+
+<p>
+Users should avoid submitting sensitive personal information through the Application.
+</p>
+
+<br>
+
+<strong>Third-Party Services</strong>
+
+<p>
+The Application may use third-party services that have their own Privacy Policies
+regarding data handling.
+</p>
+
+<p>
+These services may include:
+</p>
+
+<ul>
+  <li>
+    <a href="https://www.google.com/policies/privacy/" target="_blank" rel="noopener noreferrer">
+      Google Play Services
+    </a>
+  </li>
+  <li>
+    <a href="https://expo.dev/privacy" target="_blank" rel="noopener noreferrer">
+      Expo
+    </a>
+  </li>
+  <li>
+    AI model and cloud infrastructure providers used to process requests
+  </li>
+</ul>
+
+<br>
+
+<strong>Data Sharing and Disclosure</strong>
+
+<p>
+The Service Provider does not sell personal information.
+</p>
+
+<p>
+Information may be disclosed:
+</p>
+
+<ul>
+  <li>as required by law or legal process;</li>
+  <li>to protect the rights, safety, or security of users or the Service Provider;</li>
+  <li>to trusted infrastructure or service providers that support operation of the Application.</li>
+</ul>
+
+<br>
+
+<strong>Data Retention</strong>
+
+<p>
+The Service Provider does not maintain user accounts or long-term personal profiles.
+Submitted content may be processed temporarily by third-party AI providers in order
+to provide Application functionality.
+</p>
+
+<br>
+
+<strong>Opt-Out Rights</strong>
+
+<p>
+You can stop all collection of information by the Application easily by uninstalling it.
+You may use the standard uninstall processes available on your mobile device or through
+the mobile application marketplace.
+</p>
+
+<br>
+
+<strong>Children</strong>
+
+<p>
+The Application is not directed to children under the age of 13.
+The Service Provider does not knowingly collect personally identifiable information
+from children under 13 years of age.
+</p>
+
+<br>
+
+<strong>Security</strong>
+
+<p>
+The Service Provider takes reasonable measures to protect information processed by
+the Application. However, no method of electronic storage or transmission over the
+Internet is completely secure.
+</p>
+
+<br>
+
+<strong>Changes</strong>
+
+<p>
+This Privacy Policy may be updated from time to time for any reason.
+Changes will be reflected by updating this page.
+</p>
+
+<p>
+This privacy policy is effective as of 2026-01-04.
+</p>
+
+<br>
+
+<strong>Your Consent</strong>
+
+<p>
+By using the Application, you consent to the processing of information as described
+in this Privacy Policy.
+</p>
+
+<br>
+
+<strong>Contact Us</strong>
+
+<p>
+If you have any questions regarding privacy while using the Application,
+please contact the Service Provider via email at
+<a href="mailto:nstoilov@gmail.com">nstoilov@gmail.com</a>.
+</p>
+
+</body>
+</html>
