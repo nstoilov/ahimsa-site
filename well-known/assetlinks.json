@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.nstoilov.ahimsa",
+      "sha256_cert_fingerprints": [
+        "92:28:9D:D4:82:0F:C8:BA:6D:F6:13:65:56:DB:F6:FA:07:9B:EC:6F:B2:B9:04:C5:64:1A:FC:67:10:E0:DA:AD"
+      ]
+    }
+  }
+]

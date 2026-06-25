@@ -1,0 +1,23 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "9TJV9BCKBZ.com.nstoilov.ahimsa",
+        "paths": [
+          "/player*",
+          "/category-entries*",
+          "/library*",
+          "/home*",
+          "/profile*",
+          "/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "9TJV9BCKBZ.com.nstoilov.ahimsa"
+    ]
+  }
+}

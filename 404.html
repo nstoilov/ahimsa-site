@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ahimsa</title>
+    <meta name="description" content="Медитации за тяло и ум" />
+    <!-- Open Graph for rich link previews in Messages / social apps -->
+    <meta property="og:title" content="Ahimsa – Медитации" />
+    <meta property="og:description" content="Отвори в приложението Ahimsa" />
+    <meta property="og:url" content="https://ahimsaapp.github.io" />
+    <script>
+      // Grab the original path + query, e.g. /player?id=13
+      var path = window.location.pathname + window.location.search;
+      // Build the custom-scheme deep link: ahimsa://player?id=13
+      var deepLink = "ahimsa:/" + path;
+      // Attempt to open the app immediately
+      window.location.replace(deepLink);
+      // Fall back to the App Store / Play Store after a short delay
+      setTimeout(function () {
+        var ua = navigator.userAgent || "";
+        if (/android/i.test(ua)) {
+          window.location.href =
+            "https://play.google.com/store/apps/details?id=com.nstoilov.ahimsa";
+        } else {
+          window.location.href =
+            "https://apps.apple.com/app/id6743778698";
+        }
+      }, 1500);
+    </script>
+  </head>
+  <body>
+    <p>Отваряне на Ahimsa…</p>
+  </body>
+</html>
