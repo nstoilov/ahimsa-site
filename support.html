@@ -3,11 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ahimsa Support</title>
+  <title>Ahimsa – Поддръжка и контакти</title>
+  <meta name="description" content="Свържете се с екипа на Ahimsa. Ние сме тук, за да ви помогнем с всякакви въпроси относно нашите медитации и практики." />
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" type="image/png" href="./assets/hero.png" />
+  <style>
+    /* Unique styling for support content */
+    .support-hero {
+      padding-top: 160px;
+      padding-bottom: 120px;
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+    }
+    .support-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: 60px 40px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      max-width: 600px;
+      margin: 0 auto;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .support-card h1 {
+      font-size: 2.8rem;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+    .support-card p {
+      margin-bottom: 32px;
+      font-size: 1.15rem;
+    }
+    .support-email {
+      display: inline-block;
+      font-size: 1.5rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 32px;
+      background-color: var(--accent-light);
+      border-radius: 30px;
+      transition: var(--transition-smooth);
+    }
+    .support-email:hover {
+      background-color: var(--accent);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+  </style>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding: 50px;">
-  <h1>Ahimsa Support</h1>
-  <p>Ако имате въпроси или се нуждаете от помощ, моля, свържете се с нас на:</p>
-  <p><a href="mailto:support@ahimsaapp.com">support@ahimsaapp.com</a></p>
+<body>
+
+  <!-- Sticky Header -->
+  <header>
+    <div class="nav-container">
+      <a href="./index.html" class="logo" id="nav-logo">A H I M S A</a>
+      <a href="./index.html#download" class="nav-cta" id="nav-cta-btn">Свали сега</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="support-hero">
+      <div class="container">
+        <div class="support-card">
+          <h1>Поддръжка</h1>
+          <p>Имате въпрос, предложение или се нуждаете от техническа помощ с приложението? Нашата мисия е да ви помогнем. Свържете се с нас по имейл и ние ще ви отговорим възможно най-бързо.</p>
+          <a href="mailto:ahimsatheapp@gmail.com" class="support-email" id="btn-support-email">ahimsatheapp@gmail.com</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <a href="./index.html" class="footer-logo" id="foot-logo">Λ H I M S Λ</a>
+      
+      <div class="footer-links">
+        <a href="./support.html" class="footer-link" id="link-support">Поддръжка</a>
+        <a href="./policy.html" class="footer-link" id="link-policy-ahimsa">Политика за поверителност</a>
+      </div>
+      
+      <div class="copyright">
+        &copy; 2026 Ahimsa. Всички права запазени.
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
