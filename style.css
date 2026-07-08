@@ -474,20 +474,12 @@ footer {
     text-align: center;
   }
 
+  .hero-image-container {
+    display: none;
+  }
+
   .hero .store-badges {
     justify-content: center;
-  }
-
-  .hero-image-container {
-    align-self: auto;
-    height: auto;
-  }
-
-  .hero-image {
-    width: auto;
-    max-width: 100%;
-    height: auto;
-    object-fit: initial;
   }
   
   .feature-grid {
