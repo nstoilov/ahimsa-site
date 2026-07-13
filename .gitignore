@@ -4,3 +4,9 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# build output
+dist/
+
+# dependencies
+node_modules/
