@@ -375,6 +375,7 @@
   cursor: grab;
   user-select: none;
   touch-action: none;
+  position: relative;
 }
 
 .admin-card.is-dragging {
@@ -388,6 +389,29 @@
   border-radius: 6px 6px 0 0;
   overflow: hidden;
   background-color: rgba(255, 255, 255, 0.04);
+}
+
+.admin-card-move {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 5;
+}
+
+.admin-card-move select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: white;
+  cursor: pointer;
+}
+
+.admin-card-move select:hover {
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .admin-card-image img {

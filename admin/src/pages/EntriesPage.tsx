@@ -10,7 +10,7 @@ import {
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { AdminNav } from '../components/AdminNav'
-import { EntryCard } from '../components/EntryCard'
+import { EntryCard, type CategoryOption } from '../components/EntryCard'
 import {
   createCategory,
   fetchCategoryOrder,
@@ -81,7 +81,15 @@ function renumber(container: Container): Container {
   }
 }
 
-function CategorySection({ container }: { container: Container }) {
+function CategorySection({
+  container,
+  categoryOptions,
+  onMove,
+}: {
+  container: Container
+  categoryOptions: CategoryOption[]
+  onMove: (entryId: number, targetKey: string) => void
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: container.key })
   const itemIds = useMemo(() => container.entries.map((e) => String(e.id)), [container.entries])
 
@@ -94,7 +102,12 @@ function CategorySection({ container }: { container: Container }) {
       <div ref={setNodeRef} className="admin-cards">
         <SortableContext items={itemIds} strategy={rectSortingStrategy}>
           {container.entries.map((entry) => (
-            <EntryCard key={entry.id} entry={entry} />
+            <EntryCard
+              key={entry.id}
+              entry={entry}
+              categoryOptions={categoryOptions}
+              onMove={onMove}
+            />
           ))}
         </SortableContext>
       </div>
@@ -192,6 +205,44 @@ export function EntriesPage() {
     })
   }
 
+  function moveEntry(entryId: number, destKey: string) {
+    setContainers((prev) => {
+      const next = prev.map((c) => ({ ...c, entries: [...c.entries] }))
+      const srcIdx = next.findIndex((c) => c.entries.some((e) => e.id === entryId))
+      if (srcIdx === -1) return prev
+      const moved = next[srcIdx].entries.find((e) => e.id === entryId)
+      if (!moved) return prev
+
+      next[srcIdx] = {
+        ...next[srcIdx],
+        entries: next[srcIdx].entries.filter((e) => e.id !== entryId),
+      }
+
+      const dstIdx = next.findIndex((c) => c.key === destKey)
+      if (dstIdx === -1) return prev
+
+      const movedWithCategory: Entry = {
+        ...moved,
+        category: destKey === UNCATEGORIZED_KEY ? null : destKey,
+      }
+      next[dstIdx] = {
+        ...next[dstIdx],
+        entries: [...next[dstIdx].entries, movedWithCategory],
+      }
+
+      next[srcIdx] = renumber(next[srcIdx])
+      next[dstIdx] = renumber(next[dstIdx])
+
+      setDirty(true)
+      return next
+    })
+  }
+
+  const categoryOptions = useMemo(
+    () => containers.map((c) => ({ key: c.key, label: c.label })),
+    [containers],
+  )
+
   async function handleSave() {
     setSaving(true)
     setError(null)
@@ -267,7 +318,12 @@ export function EntriesPage() {
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {containers.map((c) => (
-              <CategorySection key={c.key} container={c} />
+              <CategorySection
+                key={c.key}
+                container={c}
+                categoryOptions={categoryOptions}
+                onMove={moveEntry}
+              />
             ))}
           </DndContext>
         )}
