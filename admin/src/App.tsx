@@ -3,7 +3,6 @@ import { useAuth } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { LoginPage } from './pages/LoginPage'
 import { SetPasswordPage } from './pages/SetPasswordPage'
-import { AdminHomePage } from './pages/AdminHomePage'
 import { EntriesPage } from './pages/EntriesPage'
 import { EntryFormPage } from './pages/EntryFormPage'
 import './App.css'
@@ -24,14 +23,6 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
-      <Route
-        path="/"
-        element={
-          <RequireAuth requireAdmin>
-            <AdminHomePage />
-          </RequireAuth>
-        }
-      />
       <Route
         path="/entries"
         element={
@@ -56,7 +47,7 @@ function AppRoutes() {
           </RequireAuth>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/entries" replace />} />
     </Routes>
   )
 }

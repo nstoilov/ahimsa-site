@@ -6,6 +6,7 @@ import {
   deleteMedia,
   fetchCategories,
   fetchEntry,
+  fetchMaxNumberInCategory,
   getSignedMediaUrl,
   updateEntry,
   uploadMedia,
@@ -24,8 +25,9 @@ export function EntryFormPage() {
   const [author, setAuthor] = useState('')
   const [category, setCategory] = useState('')
   const [free, setFree] = useState(false)
-  const [number, setNumber] = useState('')
   const [categories, setCategories] = useState<string[]>([])
+  const [originalCategory, setOriginalCategory] = useState<string | null>(null)
+  const [originalNumber, setOriginalNumber] = useState<number | null>(null)
 
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [audioFile, setAudioFile] = useState<File | null>(null)
@@ -60,7 +62,8 @@ export function EntryFormPage() {
         setAuthor(entry.author ?? '')
         setCategory(entry.category ?? '')
         setFree(entry.free)
-        setNumber(entry.number?.toString() ?? '')
+        setOriginalCategory(entry.category ?? null)
+        setOriginalNumber(entry.number ?? null)
         setExistingImagePath(entry.image_url)
         setExistingAudioPath(entry.audio_url)
         try {
@@ -92,6 +95,14 @@ export function EntryFormPage() {
   function onPickAudio(file: File | null) {
     setAudioFile(file)
     setAudioPreview(file ? URL.createObjectURL(file) : existingAudioPath ? null : null)
+  }
+
+  async function computeNumber(): Promise<number | null> {
+    const cat = category.trim()
+    if (!cat) return null
+    if (mode === 'edit' && cat === originalCategory) return originalNumber
+    const max = await fetchMaxNumberInCategory(cat)
+    return max + 1
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -136,7 +147,7 @@ export function EntryFormPage() {
         audio_url: audioPath as string,
         category: category.trim() || null,
         free,
-        number: number.trim() === '' ? null : Number(number),
+        number: await computeNumber(),
       }
 
       if (mode === 'create') {
@@ -213,15 +224,19 @@ export function EntryFormPage() {
           </label>
 
           <div className="admin-form-row">
-            <label className="admin-field">
-              <span>Number</span>
-              <input
-                type="number"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                placeholder="Optional"
-              />
-            </label>
+            {mode === 'edit' && (
+              <label className="admin-field">
+                <span>
+                  Number <span className="admin-muted">(set by drag-and-drop)</span>
+                </span>
+                <input
+                  value={originalNumber ?? '—'}
+                  readOnly
+                  tabIndex={-1}
+                  className="admin-readonly"
+                />
+              </label>
+            )}
 
             <label className="admin-check">
               <input
