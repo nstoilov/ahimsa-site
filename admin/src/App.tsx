@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage'
 import { SetPasswordPage } from './pages/SetPasswordPage'
 import { EntriesPage } from './pages/EntriesPage'
 import { EntryFormPage } from './pages/EntryFormPage'
+import { CategoriesPage } from './pages/CategoriesPage'
 import './App.css'
 // hi
 function AppRoutes() {
@@ -44,6 +45,14 @@ function AppRoutes() {
         element={
           <RequireAuth requireAdmin>
             <EntryFormPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/categories"
+        element={
+          <RequireAuth requireAdmin>
+            <CategoriesPage />
           </RequireAuth>
         }
       />

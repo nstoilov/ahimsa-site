@@ -110,6 +110,24 @@ export async function deleteCategory(name: string): Promise<void> {
   if (error) throw error
 }
 
+export type CategoryOrderUpdate = {
+  name: string
+  display_order: number
+}
+
+export async function updateCategoryOrder(
+  updates: CategoryOrderUpdate[],
+): Promise<void> {
+  await Promise.all(
+    updates.map((u) =>
+      supabase
+        .from('category_order')
+        .update({ display_order: u.display_order })
+        .eq('name', u.name),
+    ),
+  )
+}
+
 export async function fetchMaxNumberInCategory(category: string): Promise<number> {
   const { data, error } = await supabase
     .from('entries')

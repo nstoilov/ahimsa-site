@@ -13,7 +13,6 @@ import { AdminNav } from '../components/AdminNav'
 import { EntryCard } from '../components/EntryCard'
 import {
   createCategory,
-  deleteCategory,
   fetchCategoryOrder,
   fetchEntries,
   updateEntriesOrder,
@@ -82,30 +81,15 @@ function renumber(container: Container): Container {
   }
 }
 
-function CategorySection({
-  container,
-  onDeleteCategory,
-}: {
-  container: Container
-  onDeleteCategory?: (name: string) => void
-}) {
+function CategorySection({ container }: { container: Container }) {
   const { setNodeRef, isOver } = useDroppable({ id: container.key })
   const itemIds = useMemo(() => container.entries.map((e) => String(e.id)), [container.entries])
-  const isCategory = container.key !== UNCATEGORIZED_KEY
 
   return (
     <section className={`admin-category${isOver ? ' is-over' : ''}`}>
       <header className="admin-category-head">
         <h3>{container.label}</h3>
         <span className="admin-muted">{container.entries.length}</span>
-        {isCategory && onDeleteCategory && (
-          <button
-            className="admin-link-button"
-            onClick={() => onDeleteCategory(container.key)}
-          >
-            Remove category
-          </button>
-        )}
       </header>
       <div ref={setNodeRef} className="admin-cards">
         <SortableContext items={itemIds} strategy={rectSortingStrategy}>
@@ -253,16 +237,6 @@ export function EntriesPage() {
     }
   }
 
-  async function handleDeleteCategory(name: string) {
-    if (!window.confirm(`Remove category "${name}"? Entries keep their category label but will no longer be ordered here.`)) return
-    try {
-      await deleteCategory(name)
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove category.')
-    }
-  }
-
   return (
     <div className="admin-app">
       <AdminNav />
@@ -293,11 +267,7 @@ export function EntriesPage() {
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {containers.map((c) => (
-              <CategorySection
-                key={c.key}
-                container={c}
-                onDeleteCategory={handleDeleteCategory}
-              />
+              <CategorySection key={c.key} container={c} />
             ))}
           </DndContext>
         )}

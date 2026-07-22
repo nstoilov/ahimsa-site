@@ -495,3 +495,40 @@
   opacity: 0.7;
   cursor: default;
 }
+
+.admin-sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 520px;
+}
+
+.admin-sort-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.06);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.admin-sort-row.is-dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.admin-sort-grip {
+  opacity: 0.4;
+  font-size: 0.85rem;
+  letter-spacing: -0.2em;
+}
+
+.admin-sort-name {
+  flex: 1;
+  font-size: 0.95rem;
+}

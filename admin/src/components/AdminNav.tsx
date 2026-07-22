@@ -10,6 +10,7 @@ export function AdminNav() {
       </Link>
       <nav className="admin-links">
         <Link to="/entries">Entries</Link>
+        <Link to="/categories">Categories</Link>
       </nav>
       <div className="admin-account">
         <span className="admin-user">{user?.email}</span>
