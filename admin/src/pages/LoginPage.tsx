@@ -12,7 +12,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const from =
-    (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/'
+    (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/entries'
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()

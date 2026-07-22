@@ -11,6 +11,7 @@ import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { AdminNav } from '../components/AdminNav'
 import { EntryCard, type CategoryOption } from '../components/EntryCard'
+import { useAuth } from '../auth/AuthContext'
 import {
   createCategory,
   fetchCategoryOrder,
@@ -74,6 +75,15 @@ function buildContainers(
   return containers
 }
 
+function filterContainers(
+  containers: Container[],
+  adminCategories: string[] | null,
+): Container[] {
+  if (adminCategories === null) return containers
+  const allowed = new Set(adminCategories)
+  return containers.filter((c) => allowed.has(c.key))
+}
+
 function renumber(container: Container): Container {
   return {
     ...container,
@@ -116,6 +126,7 @@ function CategorySection({
 }
 
 export function EntriesPage() {
+  const { adminCategories, isFullAdmin } = useAuth()
   const [containers, setContainers] = useState<Container[]>([])
   const [original, setOriginal] = useState<Map<number, Entry>>(new Map())
   const categoryOrderRef = useRef<CategoryOrder[]>([])
@@ -137,7 +148,7 @@ export function EntriesPage() {
         fetchEntries(),
         fetchCategoryOrder(),
       ])
-      setContainers(buildContainers(entries, categoryOrder))
+      setContainers(filterContainers(buildContainers(entries, categoryOrder), adminCategories))
       setOriginal(new Map(entries.map((e) => [e.id, e])))
       categoryOrderRef.current = categoryOrder
       setDirty(false)
@@ -271,7 +282,7 @@ export function EntriesPage() {
 
   function handleCancel() {
     const entries = Array.from(original.values())
-    setContainers(buildContainers(entries, categoryOrderRef.current))
+    setContainers(filterContainers(buildContainers(entries, categoryOrderRef.current), adminCategories))
     setDirty(false)
   }
 
@@ -301,16 +312,18 @@ export function EntriesPage() {
           </div>
         </div>
 
-        <form className="admin-new-category" onSubmit={handleCreateCategory}>
-          <input
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="New category name"
-          />
-          <button type="submit" className="admin-button admin-button-sm" disabled={!newCategory.trim()}>
-            Add category
-          </button>
-        </form>
+        {isFullAdmin && (
+          <form className="admin-new-category" onSubmit={handleCreateCategory}>
+            <input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="New category name"
+            />
+            <button type="submit" className="admin-button admin-button-sm" disabled={!newCategory.trim()}>
+              Add category
+            </button>
+          </form>
+        )}
 
         {error && <p className="admin-error">{error}</p>}
         {loading ? (

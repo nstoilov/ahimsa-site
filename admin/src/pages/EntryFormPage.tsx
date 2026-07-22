@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AdminNav } from '../components/AdminNav'
+import { useAuth } from '../auth/AuthContext'
 import {
   createEntry,
   deleteMedia,
@@ -18,6 +19,7 @@ type Mode = 'create' | 'edit'
 export function EntryFormPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { adminCategories } = useAuth()
   const mode: Mode = id ? 'edit' : 'create'
   const entryId = id ? Number(id) : NaN
 
@@ -50,6 +52,23 @@ export function EntryFormPage() {
         // categories are optional suggestions; ignore failures
       })
   }, [])
+
+  const availableCategories = useMemo(
+    () =>
+      adminCategories === null
+        ? categories
+        : categories.filter((c) => adminCategories.includes(c)),
+    [categories, adminCategories],
+  )
+
+  const categoryDisabled =
+    adminCategories !== null && adminCategories.length === 1
+
+  useEffect(() => {
+    if (mode === 'create' && categoryDisabled && availableCategories.length === 1) {
+      setCategory(availableCategories[0])
+    }
+  }, [mode, categoryDisabled, availableCategories])
 
   useEffect(() => {
     if (mode !== 'edit') return
@@ -210,17 +229,25 @@ export function EntryFormPage() {
 
           <label className="admin-field">
             <span>Category</span>
-            <input
-              list="admin-categories"
+            <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="Optional"
-            />
-            <datalist id="admin-categories">
-              {categories.map((c) => (
-                <option key={c} value={c} />
+              disabled={categoryDisabled}
+            >
+              {adminCategories === null && (
+                <option value="">No category</option>
+              )}
+              {availableCategories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
-            </datalist>
+              {mode === 'edit' &&
+                category &&
+                !availableCategories.includes(category) && (
+                  <option value={category}>{category}</option>
+                )}
+            </select>
           </label>
 
           <div className="admin-form-row">

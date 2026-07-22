@@ -9,6 +9,8 @@ type AuthContextValue = {
   adminChecking: boolean
   isPasswordRecovery: boolean
   isAdmin: boolean
+  adminCategories: string[] | null
+  isFullAdmin: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   clearPasswordRecovery: () => void
@@ -16,11 +18,21 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+function parseAdminCategories(raw: string | null): string[] | null {
+  if (!raw) return null
+  const list = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+  return list.length > 0 ? list : null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [adminChecking, setAdminChecking] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminCategories, setAdminCategories] = useState<string[] | null>(null)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
 
   useEffect(() => {
@@ -39,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (event === 'SIGNED_OUT') {
         setIsPasswordRecovery(false)
         setIsAdmin(false)
+        setAdminCategories(null)
       }
     })
 
@@ -49,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const email = session?.user?.email
     if (!email) {
       setIsAdmin(false)
+      setAdminCategories(null)
       setAdminChecking(false)
       return
     }
@@ -56,14 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     supabase
       .from('admins')
-      .select('email')
+      .select('email, category')
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return
         if (error) {
           setIsAdmin(false)
+          setAdminCategories(null)
         } else {
           setIsAdmin(data !== null)
+          setAdminCategories(
+            data !== null ? parseAdminCategories(data.category) : null,
+          )
         }
         setAdminChecking(false)
       })
@@ -79,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     adminChecking,
     isPasswordRecovery,
     isAdmin,
+    adminCategories,
+    isFullAdmin: isAdmin && adminCategories === null,
     signIn: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error

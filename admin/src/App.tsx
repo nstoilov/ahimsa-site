@@ -51,7 +51,7 @@ function AppRoutes() {
       <Route
         path="/categories"
         element={
-          <RequireAuth requireAdmin>
+          <RequireAuth requireAdmin requireFullAdmin>
             <CategoriesPage />
           </RequireAuth>
         }
