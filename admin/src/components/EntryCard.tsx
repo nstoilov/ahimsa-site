@@ -13,13 +13,16 @@ export function EntryCard({
   entry,
   categoryOptions,
   onMove,
+  dragEnabled,
 }: {
   entry: Entry
   categoryOptions: CategoryOption[]
   onMove: (entryId: number, targetKey: string) => void
+  dragEnabled: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(entry.id),
+    disabled: !dragEnabled,
   })
   const [imgUrl, setImgUrl] = useState<string | null>(null)
 
@@ -32,10 +35,10 @@ export function EntryCard({
   return (
     <div
       ref={setNodeRef}
-      className={`admin-card${isDragging ? ' is-dragging' : ''}`}
+      className={`admin-card${isDragging ? ' is-dragging' : ''}${dragEnabled ? ' is-draggable' : ''}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}
-      {...listeners}
+      {...(dragEnabled ? listeners : {})}
     >
       {categoryOptions.length > 1 && (
         <div className="admin-card-move">

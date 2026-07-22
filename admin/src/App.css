@@ -458,6 +458,21 @@
   opacity: 0.6;
 }
 
+.admin-reorder-toggle {
+  margin-left: auto;
+  margin-top: 0;
+}
+
+.admin-reorder-toggle.is-on {
+  background-color: rgba(74, 222, 128, 0.2);
+  border-color: rgba(74, 222, 128, 0.5);
+  color: #4ade80;
+}
+
+.admin-reorder-toggle.is-on:hover:not(:disabled) {
+  background-color: rgba(74, 222, 128, 0.3);
+}
+
 .admin-cards {
   display: flex;
   gap: 0.75rem;
@@ -478,6 +493,11 @@
   user-select: none;
   touch-action: none;
   position: relative;
+}
+
+.admin-card:not(.is-draggable) {
+  cursor: default;
+  touch-action: auto;
 }
 
 .admin-card.is-dragging {

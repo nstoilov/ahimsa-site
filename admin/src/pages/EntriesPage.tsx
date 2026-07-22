@@ -101,12 +101,21 @@ function CategorySection({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: container.key })
   const itemIds = useMemo(() => container.entries.map((e) => String(e.id)), [container.entries])
+  const [reorderOn, setReorderOn] = useState(false)
 
   return (
     <section className={`admin-category${isOver ? ' is-over' : ''}`}>
       <header className="admin-category-head">
         <h3>{container.label}</h3>
         <span className="admin-muted">{container.entries.length}</span>
+        {container.entries.length > 0 && (
+          <button
+            className={`admin-button admin-button-sm admin-reorder-toggle${reorderOn ? ' is-on' : ''}`}
+            onClick={() => setReorderOn((v) => !v)}
+          >
+            {reorderOn ? 'Done' : 'Reorder'}
+          </button>
+        )}
       </header>
       <div ref={setNodeRef} className="admin-cards">
         <SortableContext items={itemIds} strategy={rectSortingStrategy}>
@@ -116,6 +125,7 @@ function CategorySection({
               entry={entry}
               categoryOptions={categoryOptions}
               onMove={onMove}
+              dragEnabled={reorderOn}
             />
           ))}
         </SortableContext>
