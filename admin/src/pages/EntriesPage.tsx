@@ -13,7 +13,6 @@ import { AdminNav } from '../components/AdminNav'
 import { EntryCard, type CategoryOption } from '../components/EntryCard'
 import { useAuth } from '../auth/AuthContext'
 import {
-  createCategory,
   fetchCategoryOrder,
   fetchEntries,
   updateEntriesOrder,
@@ -60,11 +59,6 @@ function buildContainers(
   const allNames = [...orderedNames, ...extraNames]
 
   const containers: Container[] = []
-  containers.push({
-    key: UNCATEGORIZED_KEY,
-    label: 'Uncategorized',
-    entries: sortEntries(entries.filter((e) => !e.category)),
-  })
   for (const name of allNames) {
     containers.push({
       key: name,
@@ -72,6 +66,11 @@ function buildContainers(
       entries: sortEntries(entries.filter((e) => e.category === name)),
     })
   }
+  containers.push({
+    key: UNCATEGORIZED_KEY,
+    label: 'Uncategorized',
+    entries: sortEntries(entries.filter((e) => !e.category)),
+  })
   return containers
 }
 
@@ -126,7 +125,7 @@ function CategorySection({
 }
 
 export function EntriesPage() {
-  const { adminCategories, isFullAdmin } = useAuth()
+  const { adminCategories } = useAuth()
   const [containers, setContainers] = useState<Container[]>([])
   const [original, setOriginal] = useState<Map<number, Entry>>(new Map())
   const categoryOrderRef = useRef<CategoryOrder[]>([])
@@ -134,7 +133,6 @@ export function EntriesPage() {
   const [error, setError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [newCategory, setNewCategory] = useState('')
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -286,19 +284,6 @@ export function EntriesPage() {
     setDirty(false)
   }
 
-  async function handleCreateCategory(e: React.FormEvent) {
-    e.preventDefault()
-    const name = newCategory.trim()
-    if (!name) return
-    try {
-      await createCategory(name)
-      setNewCategory('')
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create category.')
-    }
-  }
-
   return (
     <div className="admin-app">
       <AdminNav />
@@ -311,19 +296,6 @@ export function EntriesPage() {
             </Link>
           </div>
         </div>
-
-        {isFullAdmin && (
-          <form className="admin-new-category" onSubmit={handleCreateCategory}>
-            <input
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New category name"
-            />
-            <button type="submit" className="admin-button admin-button-sm" disabled={!newCategory.trim()}>
-              Add category
-            </button>
-          </form>
-        )}
 
         {error && <p className="admin-error">{error}</p>}
         {loading ? (
@@ -341,9 +313,11 @@ export function EntriesPage() {
           </DndContext>
         )}
 
-        <p className="admin-board-hint admin-muted">
-          Drag cards to reorder within a category or move them across categories. Click Save changes to persist.
-        </p>
+        {categoryOptions.length > 1 && (
+          <p className="admin-board-hint admin-muted">
+            Drag cards to reorder within a category or move them across categories. Click Save changes to persist.
+          </p>
+        )}
       </main>
 
       {dirty && (

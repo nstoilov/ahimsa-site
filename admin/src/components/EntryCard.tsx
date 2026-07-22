@@ -37,28 +37,30 @@ export function EntryCard({
       {...attributes}
       {...listeners}
     >
-      <div className="admin-card-move">
-        <select
-          value=""
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => {
-            const key = e.target.value
-            if (key) onMove(entry.id, key)
-            e.target.value = ''
-          }}
-          aria-label="Move to category"
-        >
-          <option value="" disabled>
-            Move…
-          </option>
-          {categoryOptions.map((opt) => (
-            <option key={opt.key} value={opt.key}>
-              {opt.label}
+      {categoryOptions.length > 1 && (
+        <div className="admin-card-move">
+          <select
+            value=""
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              const key = e.target.value
+              if (key) onMove(entry.id, key)
+              e.target.value = ''
+            }}
+            aria-label="Move to category"
+          >
+            <option value="" disabled>
+              ↕️
             </option>
-          ))}
-        </select>
-      </div>
+            {categoryOptions.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="admin-card-image">
         {imgUrl ? (
           <img src={imgUrl} alt={entry.title} draggable={false} />

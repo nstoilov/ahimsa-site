@@ -17,15 +17,26 @@ import { CSS } from '@dnd-kit/utilities'
 import { AdminNav } from '../components/AdminNav'
 import {
   createCategory,
+  deleteCategory,
   fetchCategoryOrder,
+  fetchEntries,
   updateCategoryOrder,
   type CategoryOrder,
   type CategoryOrderUpdate,
 } from '../lib/entries'
 
-function SortableCategory({ category }: { category: CategoryOrder }) {
+function SortableCategory({
+  category,
+  entryCount,
+  onRemove,
+}: {
+  category: CategoryOrder
+  entryCount: number
+  onRemove: (name: string, hasEntries: boolean) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: category.name })
+  const hasEntries = entryCount > 0
   return (
     <div
       ref={setNodeRef}
@@ -36,7 +47,17 @@ function SortableCategory({ category }: { category: CategoryOrder }) {
     >
       <span className="admin-sort-grip">⋮⋮</span>
       <span className="admin-sort-name">{category.name}</span>
-      <span className="admin-muted">#{category.display_order}</span>
+      <span className="admin-muted">{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</span>
+      <button
+        className={`admin-button-danger admin-button-sm${hasEntries ? ' admin-button-disabled' : ''}`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          onRemove(category.name, hasEntries)
+        }}
+      >
+        Remove
+      </button>
     </div>
   )
 }
@@ -49,6 +70,10 @@ export function CategoriesPage() {
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [newName, setNewName] = useState('')
+  const [removing, setRemoving] = useState<string | null>(null)
+  const [removingBusy, setRemovingBusy] = useState(false)
+  const [blocked, setBlocked] = useState<string | null>(null)
+  const [entryCounts, setEntryCounts] = useState<Record<string, number>>({})
   const originalRef = useRef<CategoryOrder[]>([])
 
   const sensors = useSensors(
@@ -59,10 +84,18 @@ export function CategoriesPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchCategoryOrder()
+      const [data, entries] = await Promise.all([
+        fetchCategoryOrder(),
+        fetchEntries(),
+      ])
       setCategories(data)
       setOriginal(data)
       originalRef.current = data
+      const counts: Record<string, number> = {}
+      for (const e of entries) {
+        if (e.category) counts[e.category] = (counts[e.category] ?? 0) + 1
+      }
+      setEntryCounts(counts)
       setDirty(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load categories.')
@@ -133,6 +166,21 @@ export function CategoriesPage() {
     }
   }
 
+  async function confirmRemove() {
+    if (!removing) return
+    setRemovingBusy(true)
+    setError(null)
+    try {
+      await deleteCategory(removing)
+      setRemoving(null)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove category.')
+    } finally {
+      setRemovingBusy(false)
+    }
+  }
+
   return (
     <div className="admin-app">
       <AdminNav />
@@ -173,7 +221,14 @@ export function CategoriesPage() {
             >
               <div className="admin-sort-list">
                 {categories.map((c) => (
-                  <SortableCategory key={c.name} category={c} />
+                  <SortableCategory
+                    key={c.name}
+                    category={c}
+                    entryCount={entryCounts[c.name] ?? 0}
+                    onRemove={(name, hasEntries) =>
+                      hasEntries ? setBlocked(name) : setRemoving(name)
+                    }
+                  />
                 ))}
               </div>
             </SortableContext>
@@ -197,6 +252,55 @@ export function CategoriesPage() {
           <button className="admin-button" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save changes'}
           </button>
+        </div>
+      )}
+
+      {removing && (
+        <div className="admin-modal-overlay" onClick={() => !removingBusy && setRemoving(null)}>
+          <div className="admin-modal admin-modal-danger" onClick={(e) => e.stopPropagation()}>
+            <h3 className="admin-modal-danger-title">Remove category</h3>
+            <p>
+              Are you sure? This cannot be undone.
+            </p>
+            <div className="admin-modal-actions">
+              <button
+                className="admin-button admin-button-ghost"
+                onClick={() => setRemoving(null)}
+                disabled={removingBusy}
+              >
+                Cancel
+              </button>
+              <button
+                className="admin-button-danger"
+                onClick={confirmRemove}
+                disabled={removingBusy}
+              >
+                {removingBusy ? 'Removing…' : 'Remove category'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {blocked && (
+        <div className="admin-modal-overlay" onClick={() => setBlocked(null)}>
+          <div className="admin-modal admin-modal-danger" onClick={(e) => e.stopPropagation()}>
+            <h3 className="admin-modal-danger-title">Cannot remove category</h3>
+            <p>
+              <strong>{blocked}</strong> still has entries.
+            </p>
+            <p className="admin-modal-danger-text">
+              To delete, first remove all entries from this category.
+            </p>
+            <div className="admin-modal-actions">
+              <button
+                className="admin-button admin-button-ghost"
+                onClick={() => setBlocked(null)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

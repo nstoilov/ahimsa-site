@@ -110,6 +110,15 @@ export async function deleteCategory(name: string): Promise<void> {
   if (error) throw error
 }
 
+export async function removeCategoryWithEntries(name: string): Promise<void> {
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({ category: null, number: null })
+    .eq('category', name)
+  if (updateError) throw updateError
+  await deleteCategory(name)
+}
+
 export type CategoryOrderUpdate = {
   name: string
   display_order: number

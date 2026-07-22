@@ -142,6 +142,89 @@
   cursor: default;
 }
 
+.admin-button-danger {
+  margin-top: 0;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid rgba(220, 70, 70, 0.5);
+  border-radius: 4px;
+  background-color: rgba(220, 70, 70, 0.2);
+  color: #ff8b8b;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.admin-button-danger:hover:not(:disabled) {
+  background-color: rgba(220, 70, 70, 0.35);
+  border-color: rgba(220, 70, 70, 0.7);
+}
+
+.admin-button-danger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-button-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-button-disabled:hover {
+  opacity: 0.4;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 2rem;
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 400px;
+  padding: 1.5rem;
+  border-radius: 8px;
+  background-color: #232342;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.admin-modal-danger {
+  border-color: rgba(220, 70, 70, 0.45);
+}
+
+.admin-modal-danger-title {
+  margin: 0 0 0.75rem;
+  color: #ff8b8b;
+}
+
+.admin-modal-danger-text {
+  color: #ff8b8b;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.admin-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.admin-modal-actions .admin-button,
+.admin-modal-actions .admin-button-danger {
+  margin-top: 0;
+}
+
 .admin-error {
   margin: 0;
   color: #ff8b8b;
@@ -412,21 +495,28 @@
 
 .admin-card-move {
   position: absolute;
-  top: 0.3rem;
-  right: 0.3rem;
+  top: 0.25rem;
+  right: 0.25rem;
   z-index: 5;
 }
 
 .admin-card-move select {
   appearance: none;
   -webkit-appearance: none;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.7rem;
+  width: 1.8rem;
+  min-width: 1.8rem;
+  max-width: 1.8rem;
+  padding: 0.15rem;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   background-color: rgba(0, 0, 0, 0.55);
   color: white;
   cursor: pointer;
+  text-indent: 0.01px;
+  text-overflow: "";
 }
 
 .admin-card-move select:hover {
