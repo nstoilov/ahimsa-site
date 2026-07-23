@@ -9,8 +9,7 @@
           "/category-entries*",
           "/library*",
           "/home*",
-          "/profile*",
-          "/*"
+          "/profile*"
         ]
       }
     ]
