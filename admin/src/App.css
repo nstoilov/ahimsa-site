@@ -430,6 +430,55 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.admin-preview-video {
+  max-width: 320px;
+  max-height: 320px;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.admin-media-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.admin-media-toggle button {
+  padding: 0.6rem 1.25rem;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-media-toggle button + button {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.admin-media-toggle button:hover:not(:disabled):not(.is-active) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-media-toggle button.is-active {
+  background-color: rgba(255, 255, 255, 0.18);
+  cursor: default;
+}
+
+.admin-media-toggle button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-card-badges {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .admin-board-page {
   max-width: 100%;
   padding-bottom: 5rem;

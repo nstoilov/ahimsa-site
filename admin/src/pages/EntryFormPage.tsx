@@ -4,15 +4,15 @@ import { AdminNav } from '../components/AdminNav'
 import { useAuth } from '../auth/AuthContext'
 import {
   createEntry,
-  deleteMedia,
   fetchCategories,
   fetchEntry,
   fetchMaxNumberInCategory,
-  getSignedMediaUrl,
   updateEntry,
-  uploadMedia,
   type EntryInput,
+  type MediaType,
 } from '../lib/entries'
+import { getAudioUrl, getImageUrl, getVideoUrl } from '../lib/media'
+import { presignAndUpload } from '../lib/r2upload'
 
 type Mode = 'create' | 'edit'
 
@@ -31,12 +31,18 @@ export function EntryFormPage() {
   const [originalCategory, setOriginalCategory] = useState<string | null>(null)
   const [originalNumber, setOriginalNumber] = useState<number | null>(null)
 
+  const [mediaType, setMediaType] = useState<MediaType>('audio')
+  const mediaTypeLocked = mode === 'edit'
+
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [audioPreview, setAudioPreview] = useState<string | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const [existingImagePath, setExistingImagePath] = useState<string | null>(null)
   const [existingAudioPath, setExistingAudioPath] = useState<string | null>(null)
+  const [existingVideoPath, setExistingVideoPath] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
@@ -44,6 +50,7 @@ export function EntryFormPage() {
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const audioInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchCategories()
@@ -81,19 +88,18 @@ export function EntryFormPage() {
         setAuthor(entry.author ?? '')
         setCategory(entry.category ?? '')
         setFree(entry.free)
+        setMediaType(entry.media_type)
         setOriginalCategory(entry.category ?? null)
         setOriginalNumber(entry.number ?? null)
         setExistingImagePath(entry.image_url)
         setExistingAudioPath(entry.audio_url)
-        try {
-          setImagePreview(await getSignedMediaUrl('images', entry.image_url))
-        } catch {
-          // preview optional
+        setExistingVideoPath(entry.video_url)
+        setImagePreview(getImageUrl(entry.image_url))
+        if (entry.media_type === 'audio' && entry.audio_url) {
+          setAudioPreview(getAudioUrl(entry.audio_url))
         }
-        try {
-          setAudioPreview(await getSignedMediaUrl('audio', entry.audio_url))
-        } catch {
-          // preview optional
+        if (entry.media_type === 'video' && entry.video_url) {
+          setVideoPreview(getVideoUrl(entry.video_url))
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load entry.')
@@ -108,12 +114,23 @@ export function EntryFormPage() {
 
   function onPickImage(file: File | null) {
     setImageFile(file)
-    setImagePreview(file ? URL.createObjectURL(file) : existingImagePath ? null : null)
+    setImagePreview(
+      file ? URL.createObjectURL(file) : existingImagePath ? getImageUrl(existingImagePath) : null,
+    )
   }
 
   function onPickAudio(file: File | null) {
     setAudioFile(file)
-    setAudioPreview(file ? URL.createObjectURL(file) : existingAudioPath ? null : null)
+    setAudioPreview(
+      file ? URL.createObjectURL(file) : existingAudioPath ? getAudioUrl(existingAudioPath) : null,
+    )
+  }
+
+  function onPickVideo(file: File | null) {
+    setVideoFile(file)
+    setVideoPreview(
+      file ? URL.createObjectURL(file) : existingVideoPath ? getVideoUrl(existingVideoPath) : null,
+    )
   }
 
   async function computeNumber(): Promise<number | null> {
@@ -136,8 +153,12 @@ export function EntryFormPage() {
       setError('An image is required.')
       return
     }
-    if (!audioFile && !existingAudioPath) {
+    if (mediaType === 'audio' && !audioFile && !existingAudioPath) {
       setError('An audio file is required.')
+      return
+    }
+    if (mediaType === 'video' && !videoFile && !existingVideoPath) {
+      setError('A video file is required.')
       return
     }
 
@@ -145,27 +166,27 @@ export function EntryFormPage() {
     try {
       let imagePath = existingImagePath
       let audioPath = existingAudioPath
+      let videoPath = existingVideoPath
 
       if (imageFile) {
-        imagePath = await uploadMedia('images', imageFile)
-        if (existingImagePath) {
-          await deleteMedia('images', existingImagePath).catch(() => {})
-        }
+        imagePath = await presignAndUpload('images', imageFile)
       }
-      if (audioFile) {
-        audioPath = await uploadMedia('audio', audioFile)
-        if (existingAudioPath) {
-          await deleteMedia('audio', existingAudioPath).catch(() => {})
-        }
+      if (mediaType === 'audio' && audioFile) {
+        audioPath = await presignAndUpload('audio', audioFile)
+      }
+      if (mediaType === 'video' && videoFile) {
+        videoPath = await presignAndUpload('videos', videoFile)
       }
 
       const input: EntryInput = {
         title: title.trim(),
         author: author.trim() || null,
         image_url: imagePath as string,
-        audio_url: audioPath as string,
+        audio_url: mediaType === 'video' ? '' : (audioPath as string),
         category: category.trim() || null,
         free,
+        media_type: mediaType,
+        video_url: mediaType === 'video' ? (videoPath ?? null) : null,
         number: await computeNumber(),
       }
 
@@ -276,6 +297,33 @@ export function EntryFormPage() {
           </div>
 
           <div className="admin-field">
+            <span>
+              Media type{' '}
+              {mediaTypeLocked && (
+                <span className="admin-muted">(locked after creation)</span>
+              )}
+            </span>
+            <div className="admin-media-toggle" role="group" aria-label="Media type">
+              <button
+                type="button"
+                disabled={mediaTypeLocked}
+                className={mediaType === 'audio' ? 'is-active' : ''}
+                onClick={() => setMediaType('audio')}
+              >
+                Audio
+              </button>
+              <button
+                type="button"
+                disabled={mediaTypeLocked}
+                className={mediaType === 'video' ? 'is-active' : ''}
+                onClick={() => setMediaType('video')}
+              >
+                Video
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-field">
             <span>Cover image *</span>
             <input
               ref={imageInputRef}
@@ -288,18 +336,35 @@ export function EntryFormPage() {
             )}
           </div>
 
-          <div className="admin-field">
-            <span>Audio file *</span>
-            <input
-              ref={audioInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={(e) => onPickAudio(e.target.files?.[0] ?? null)}
-            />
-            {audioPreview && (
-              <audio className="admin-preview" src={audioPreview} controls />
-            )}
-          </div>
+          {mediaType === 'audio' && (
+            <div className="admin-field">
+              <span>Audio file *</span>
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                onChange={(e) => onPickAudio(e.target.files?.[0] ?? null)}
+              />
+              {audioPreview && (
+                <audio className="admin-preview" src={audioPreview} controls />
+              )}
+            </div>
+          )}
+
+          {mediaType === 'video' && (
+            <div className="admin-field">
+              <span>Video file *</span>
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                onChange={(e) => onPickVideo(e.target.files?.[0] ?? null)}
+              />
+              {videoPreview && (
+                <video className="admin-preview admin-preview-video" src={videoPreview} controls />
+              )}
+            </div>
+          )}
 
           {error && <p className="admin-error">{error}</p>}
 

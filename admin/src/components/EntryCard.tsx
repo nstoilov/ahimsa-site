@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Link } from 'react-router-dom'
-import { getSignedMediaUrl, type Entry } from '../lib/entries'
+import { type Entry } from '../lib/entries'
+import { getImageUrl } from '../lib/media'
 
 export type CategoryOption = {
   key: string
@@ -24,13 +25,8 @@ export function EntryCard({
     id: String(entry.id),
     disabled: !dragEnabled,
   })
-  const [imgUrl, setImgUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    getSignedMediaUrl('images', entry.image_url)
-      .then(setImgUrl)
-      .catch(() => setImgUrl(null))
-  }, [entry.image_url])
+  const [imgFailed, setImgFailed] = useState(false)
+  const imgUrl = getImageUrl(entry.image_url)
 
   return (
     <div
@@ -65,8 +61,13 @@ export function EntryCard({
         </div>
       )}
       <div className="admin-card-image">
-        {imgUrl ? (
-          <img src={imgUrl} alt={entry.title} draggable={false} />
+        {imgUrl && !imgFailed ? (
+          <img
+            src={imgUrl}
+            alt={entry.title}
+            draggable={false}
+            onError={() => setImgFailed(true)}
+          />
         ) : (
           <div className="admin-card-placeholder" />
         )}
@@ -76,11 +77,16 @@ export function EntryCard({
         {entry.author && <span className="admin-card-author">{entry.author}</span>}
       </div>
       <div className="admin-card-footer">
-        {entry.free ? (
-          <span className="admin-badge">Free</span>
-        ) : (
-          <span className="admin-badge admin-badge-paid">Paid</span>
-        )}
+        <div className="admin-card-badges">
+          <span className="admin-badge" title={`Media type: ${entry.media_type}`}>
+            {entry.media_type === 'video' ? '🎬 Video' : '🎧 Audio'}
+          </span>
+          {entry.free ? (
+            <span className="admin-badge">Free</span>
+          ) : (
+            <span className="admin-badge admin-badge-paid">Paid</span>
+          )}
+        </div>
         <Link
           to={`/entries/${entry.id}/edit`}
           className="admin-card-edit"

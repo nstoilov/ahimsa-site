@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
 
+export type MediaType = 'audio' | 'video'
+
 export type Entry = {
   id: number
   title: string
@@ -8,6 +10,8 @@ export type Entry = {
   audio_url: string
   category: string | null
   free: boolean
+  media_type: MediaType
+  video_url: string | null
   number: number | null
   created_at: string | null
 }
@@ -19,6 +23,8 @@ export type EntryInput = {
   audio_url: string
   category: string | null
   free: boolean
+  media_type: MediaType
+  video_url: string | null
   number: number | null
 }
 
@@ -161,43 +167,4 @@ export async function updateEntriesOrder(updates: OrderUpdate[]): Promise<void> 
       supabase.from('entries').update({ category: u.category, number: u.number }).eq('id', u.id),
     ),
   )
-}
-
-function sanitizeFileName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9.\-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-export async function uploadMedia(
-  bucket: 'images' | 'audio',
-  file: File,
-): Promise<string> {
-  const path = `entries/${Date.now()}-${sanitizeFileName(file.name)}`
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    upsert: false,
-    contentType: file.type || undefined,
-  })
-  if (error) throw error
-  return path
-}
-
-export async function deleteMedia(
-  bucket: 'images' | 'audio',
-  path: string,
-): Promise<void> {
-  const { error } = await supabase.storage.from(bucket).remove([path])
-  if (error) throw error
-}
-
-export async function getSignedMediaUrl(
-  bucket: 'images' | 'audio',
-  path: string,
-): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(path, 3600)
-  if (error) throw error
-  return data.signedUrl
 }
