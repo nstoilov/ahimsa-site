@@ -10,6 +10,7 @@ export function AdminNav() {
       </Link>
       <nav className="admin-links">
         <Link to="/entries">Entries</Link>
+        {isFullAdmin && <Link to="/analytics">Analytics</Link>}
         {isFullAdmin && <Link to="/categories">Categories</Link>}
       </nav>
       <div className="admin-account">

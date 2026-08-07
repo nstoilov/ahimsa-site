@@ -6,6 +6,7 @@ import { SetPasswordPage } from './pages/SetPasswordPage'
 import { EntriesPage } from './pages/EntriesPage'
 import { EntryFormPage } from './pages/EntryFormPage'
 import { CategoriesPage } from './pages/CategoriesPage'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import './App.css'
 // hi
 function AppRoutes() {
@@ -53,6 +54,14 @@ function AppRoutes() {
         element={
           <RequireAuth requireAdmin requireFullAdmin>
             <CategoriesPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <RequireAuth requireAdmin requireFullAdmin>
+            <AnalyticsPage />
           </RequireAuth>
         }
       />

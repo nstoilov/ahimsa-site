@@ -774,3 +774,147 @@
   flex: 1;
   font-size: 0.95rem;
 }
+
+/* Analytics dashboard ---------------------------------------------------- */
+
+.admin-analytics-page {
+  max-width: 1100px;
+}
+
+.admin-analytics-controls {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-analytics-period-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.admin-analytics-period-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+
+.admin-analytics-range {
+  margin: -0.5rem 0 1.5rem;
+  font-size: 0.82rem;
+}
+
+.admin-analytics-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-stat {
+  flex: 1 1 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.admin-stat-value {
+  font-size: 1.35rem;
+  font-weight: 400;
+}
+
+.admin-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.admin-analytics-pies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-analytics-pie {
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.admin-analytics-pie h3 {
+  margin: 0 0 0.5rem;
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+.admin-analytics-empty {
+  font-size: 0.85rem;
+  padding: 2rem 0;
+}
+
+.admin-analytics-table-wrap {
+  margin-bottom: 1rem;
+}
+
+.admin-analytics-table-wrap h3 {
+  margin: 0 0 0.75rem;
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+.admin-analytics-table th.num,
+.admin-analytics-table td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-analytics-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.admin-analytics-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-analytics-table th.sortable:hover {
+  opacity: 1;
+}
+
+.admin-analytics-table td .admin-badge {
+  margin-left: 0.4rem;
+}
+
+.admin-badge-fraud {
+  background-color: rgba(248, 113, 113, 0.22);
+  color: #f87171;
+}
+
+.admin-analytics-footnote {
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .admin-analytics-page .admin-page-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .admin-analytics-stats {
+    flex-direction: column;
+  }
+}
