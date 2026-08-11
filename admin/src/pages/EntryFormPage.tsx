@@ -4,10 +4,14 @@ import { AdminNav } from '../components/AdminNav'
 import { useAuth } from '../auth/AuthContext'
 import {
   createEntry,
-  fetchCategories,
+  categoryTypeSets,
+  fetchCategoryOrder,
+  fetchEntries,
   fetchEntry,
   fetchMaxNumberInCategory,
   updateEntry,
+  type CategoryOrder,
+  type Entry,
   type EntryInput,
   type MediaType,
 } from '../lib/entries'
@@ -26,9 +30,11 @@ export function EntryFormPage() {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [category, setCategory] = useState('')
+  const [videoCategory, setVideoCategory] = useState('')
   const [free, setFree] = useState(false)
-  const [categories, setCategories] = useState<string[]>([])
+  const [categories, setCategories] = useState<CategoryOrder[]>([])
   const [originalCategory, setOriginalCategory] = useState<string | null>(null)
+  const [originalVideoCategory, setOriginalVideoCategory] = useState<string | null>(null)
   const [originalNumber, setOriginalNumber] = useState<number | null>(null)
 
   const [mediaType, setMediaType] = useState<MediaType>('audio')
@@ -47,35 +53,73 @@ export function EntryFormPage() {
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [audioCategories, setAudioCategories] = useState<Set<string>>(new Set())
+  const [videoCategories, setVideoCategories] = useState<Set<string>>(new Set())
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const audioInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    fetchCategories()
+    fetchCategoryOrder()
       .then(setCategories)
       .catch(() => {
         // categories are optional suggestions; ignore failures
       })
+    fetchEntries()
+      .then((entries) => {
+        fetchCategoryOrder()
+          .then((order) => {
+            const { audio, video } = categoryTypeSets(entries as Entry[], order)
+            setAudioCategories(audio)
+            setVideoCategories(video)
+          })
+          .catch(() => {
+            // ignore failures
+          })
+      })
+      .catch(() => {
+        // ignore failures
+      })
   }, [])
 
-  const availableCategories = useMemo(
-    () =>
-      adminCategories === null
-        ? categories
-        : categories.filter((c) => adminCategories.includes(c)),
+  const rawAvailable = useMemo(
+    () => {
+      const names = categories.map((c) => c.name)
+      if (adminCategories === null) return names
+      return names.filter((c) => adminCategories.includes(c))
+    },
     [categories, adminCategories],
   )
+
+  const availableCategories = useMemo(() => {
+    if (mediaType === 'audio') {
+      return rawAvailable.filter(
+        (c) => !(videoCategories.has(c) && !audioCategories.has(c)),
+      )
+    }
+    if (mediaType === 'video') {
+      return rawAvailable.filter(
+        (c) => !(audioCategories.has(c) && !videoCategories.has(c)),
+      )
+    }
+    return rawAvailable
+  }, [rawAvailable, mediaType, audioCategories, videoCategories])
 
   const categoryDisabled =
     adminCategories !== null && adminCategories.length === 1
 
   useEffect(() => {
     if (mode === 'create' && categoryDisabled && availableCategories.length === 1) {
-      setCategory(availableCategories[0])
+      if (mediaType === 'audio') {
+        setCategory(availableCategories[0])
+        setVideoCategory('')
+      } else {
+        setVideoCategory(availableCategories[0])
+        setCategory('')
+      }
     }
-  }, [mode, categoryDisabled, availableCategories])
+  }, [mode, categoryDisabled, availableCategories, mediaType])
 
   useEffect(() => {
     if (mode !== 'edit') return
@@ -87,9 +131,11 @@ export function EntryFormPage() {
         setTitle(entry.title)
         setAuthor(entry.author ?? '')
         setCategory(entry.category ?? '')
+        setVideoCategory(entry.video_category ?? '')
         setFree(entry.free)
         setMediaType(entry.media_type)
         setOriginalCategory(entry.category ?? null)
+        setOriginalVideoCategory(entry.video_category ?? null)
         setOriginalNumber(entry.number ?? null)
         setExistingImagePath(entry.image_url)
         setExistingAudioPath(entry.audio_url)
@@ -134,10 +180,13 @@ export function EntryFormPage() {
   }
 
   async function computeNumber(): Promise<number | null> {
-    const cat = category.trim()
+    const isVideo = mediaType === 'video'
+    const cat = isVideo ? videoCategory.trim() : category.trim()
+    const field = isVideo ? 'video_category' : 'category'
+    const origCat = isVideo ? originalVideoCategory : originalCategory
     if (!cat) return null
-    if (mode === 'edit' && cat === originalCategory) return originalNumber
-    const max = await fetchMaxNumberInCategory(cat)
+    if (mode === 'edit' && cat === origCat) return originalNumber
+    const max = await fetchMaxNumberInCategory(field, cat)
     return max + 1
   }
 
@@ -162,6 +211,19 @@ export function EntryFormPage() {
       return
     }
 
+    const isVideo = mediaType === 'video'
+    const selectedCat = isVideo ? videoCategory.trim() : category.trim()
+    const isAudioCat = audioCategories.has(selectedCat)
+    const isVideoCat = videoCategories.has(selectedCat)
+    if (isVideo && isAudioCat && !isVideoCat) {
+      setError('This category is used for audio entries. Please select a video category.')
+      return
+    }
+    if (!isVideo && isVideoCat && !isAudioCat) {
+      setError('This category is used for video entries. Please select an audio category.')
+      return
+    }
+
     setSubmitting(true)
     try {
       let imagePath = existingImagePath
@@ -182,11 +244,12 @@ export function EntryFormPage() {
         title: title.trim(),
         author: author.trim() || null,
         image_url: imagePath as string,
-        audio_url: mediaType === 'video' ? '' : (audioPath as string),
-        category: category.trim() || null,
+        audio_url: isVideo ? '' : (audioPath as string),
+        category: isVideo ? null : (category.trim() || null),
+        video_category: isVideo ? (videoCategory.trim() || null) : null,
         free,
         media_type: mediaType,
-        video_url: mediaType === 'video' ? (videoPath ?? null) : null,
+        video_url: isVideo ? (videoPath ?? null) : null,
         number: await computeNumber(),
       }
 
@@ -239,6 +302,39 @@ export function EntryFormPage() {
             />
           </label>
 
+          <div className="admin-field">
+            <span>
+              Media type{' '}
+              {mediaTypeLocked && (
+                <span className="admin-muted">(locked after creation)</span>
+              )}
+            </span>
+            <div className="admin-media-toggle" role="group" aria-label="Media type">
+              <button
+                type="button"
+                disabled={mediaTypeLocked}
+                className={mediaType === 'audio' ? 'is-active' : ''}
+                onClick={() => {
+                  setMediaType('audio')
+                  setVideoCategory('')
+                }}
+              >
+                Audio
+              </button>
+              <button
+                type="button"
+                disabled={mediaTypeLocked}
+                className={mediaType === 'video' ? 'is-active' : ''}
+                onClick={() => {
+                  setMediaType('video')
+                  setCategory('')
+                }}
+              >
+                Video
+              </button>
+            </div>
+          </div>
+
           <label className="admin-field">
             <span>Author</span>
             <input
@@ -248,28 +344,53 @@ export function EntryFormPage() {
             />
           </label>
 
-          <label className="admin-field">
-            <span>Category</span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              disabled={categoryDisabled}
-            >
-              {adminCategories === null && (
-                <option value="">No category</option>
-              )}
-              {availableCategories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-              {mode === 'edit' &&
-                category &&
-                !availableCategories.includes(category) && (
-                  <option value={category}>{category}</option>
+          {mediaType === 'audio' ? (
+            <label className="admin-field">
+              <span>Category</span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                disabled={categoryDisabled}
+              >
+                {adminCategories === null && (
+                  <option value="">No category</option>
                 )}
-            </select>
-          </label>
+                {availableCategories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+                {mode === 'edit' &&
+                  category &&
+                  !availableCategories.includes(category) && (
+                    <option value={category}>{category}</option>
+                  )}
+              </select>
+            </label>
+          ) : (
+            <label className="admin-field">
+              <span>Video category</span>
+              <select
+                value={videoCategory}
+                onChange={(e) => setVideoCategory(e.target.value)}
+                disabled={categoryDisabled}
+              >
+                {adminCategories === null && (
+                  <option value="">No category</option>
+                )}
+                {availableCategories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+                {mode === 'edit' &&
+                  videoCategory &&
+                  !availableCategories.includes(videoCategory) && (
+                    <option value={videoCategory}>{videoCategory}</option>
+                  )}
+              </select>
+            </label>
+          )}
 
           <div className="admin-form-row">
             {mode === 'edit' && (
@@ -294,33 +415,6 @@ export function EntryFormPage() {
               />
               <span>Free</span>
             </label>
-          </div>
-
-          <div className="admin-field">
-            <span>
-              Media type{' '}
-              {mediaTypeLocked && (
-                <span className="admin-muted">(locked after creation)</span>
-              )}
-            </span>
-            <div className="admin-media-toggle" role="group" aria-label="Media type">
-              <button
-                type="button"
-                disabled={mediaTypeLocked}
-                className={mediaType === 'audio' ? 'is-active' : ''}
-                onClick={() => setMediaType('audio')}
-              >
-                Audio
-              </button>
-              <button
-                type="button"
-                disabled={mediaTypeLocked}
-                className={mediaType === 'video' ? 'is-active' : ''}
-                onClick={() => setMediaType('video')}
-              >
-                Video
-              </button>
-            </div>
           </div>
 
           <div className="admin-field">

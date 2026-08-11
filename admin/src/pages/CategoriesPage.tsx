@@ -18,6 +18,7 @@ import { AdminNav } from '../components/AdminNav'
 import {
   createCategory,
   deleteCategory,
+  categoryTypeSets,
   fetchCategoryOrder,
   fetchEntries,
   updateCategoryOrder,
@@ -25,18 +26,33 @@ import {
   type CategoryOrderUpdate,
 } from '../lib/entries'
 
+function categoryTypeBadge(name: string, audioCats: Set<string>, videoCats: Set<string>): string | null {
+  const isAudio = audioCats.has(name)
+  const isVideo = videoCats.has(name)
+  if (isAudio && isVideo) return 'mixed'
+  if (isAudio) return 'audio'
+  if (isVideo) return 'video'
+  return null
+}
+
 function SortableCategory({
   category,
   entryCount,
+  audioCategories,
+  videoCategories,
   onRemove,
 }: {
   category: CategoryOrder
   entryCount: number
+  audioCategories: Set<string>
+  videoCategories: Set<string>
   onRemove: (name: string, hasEntries: boolean) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: category.name })
   const hasEntries = entryCount > 0
+  const inferred = categoryTypeBadge(category.name, audioCategories, videoCategories)
+  const type = inferred ?? (category.type === 'video' ? 'video' : 'audio')
   return (
     <div
       ref={setNodeRef}
@@ -47,6 +63,7 @@ function SortableCategory({
     >
       <span className="admin-sort-grip">⋮⋮</span>
       <span className="admin-sort-name">{category.name}</span>
+      <span className={`admin-badge admin-badge-${type}`}>{type}</span>
       <span className="admin-muted">{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</span>
       <button
         className={`admin-button-danger admin-button-sm${hasEntries ? ' admin-button-disabled' : ''}`}
@@ -70,10 +87,13 @@ export function CategoriesPage() {
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [newName, setNewName] = useState('')
+  const [newIsVideo, setNewIsVideo] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
   const [removingBusy, setRemovingBusy] = useState(false)
   const [blocked, setBlocked] = useState<string | null>(null)
   const [entryCounts, setEntryCounts] = useState<Record<string, number>>({})
+  const [audioCategories, setAudioCategories] = useState<Set<string>>(new Set())
+  const [videoCategories, setVideoCategories] = useState<Set<string>>(new Set())
   const originalRef = useRef<CategoryOrder[]>([])
 
   const sensors = useSensors(
@@ -93,9 +113,13 @@ export function CategoriesPage() {
       originalRef.current = data
       const counts: Record<string, number> = {}
       for (const e of entries) {
-        if (e.category) counts[e.category] = (counts[e.category] ?? 0) + 1
+        const cat = e.media_type === 'video' ? e.video_category : e.category
+        if (cat) counts[cat] = (counts[cat] ?? 0) + 1
       }
       setEntryCounts(counts)
+      const { audio, video } = categoryTypeSets(entries, data)
+      setAudioCategories(audio)
+      setVideoCategories(video)
       setDirty(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load categories.')
@@ -158,8 +182,9 @@ export function CategoriesPage() {
     const name = newName.trim()
     if (!name) return
     try {
-      await createCategory(name)
+      await createCategory(name, newIsVideo ? 'video' : 'audio')
       setNewName('')
+      setNewIsVideo(false)
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create category.')
@@ -195,6 +220,14 @@ export function CategoriesPage() {
             onChange={(e) => setNewName(e.target.value)}
             placeholder="New category name"
           />
+          <label className="admin-check">
+            <input
+              type="checkbox"
+              checked={newIsVideo}
+              onChange={(e) => setNewIsVideo(e.target.checked)}
+            />
+            <span>Video</span>
+          </label>
           <button
             type="submit"
             className="admin-button admin-button-sm"
@@ -225,6 +258,8 @@ export function CategoriesPage() {
                     key={c.name}
                     category={c}
                     entryCount={entryCounts[c.name] ?? 0}
+                    audioCategories={audioCategories}
+                    videoCategories={videoCategories}
                     onRemove={(name, hasEntries) =>
                       hasEntries ? setBlocked(name) : setRemoving(name)
                     }

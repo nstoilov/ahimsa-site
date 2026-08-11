@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Link } from 'react-router-dom'
@@ -10,14 +10,38 @@ export type CategoryOption = {
   label: string
 }
 
+function filterCompatibleOptions(
+  options: CategoryOption[],
+  entry: Entry,
+  audioCats: Set<string>,
+  videoCats: Set<string>,
+): CategoryOption[] {
+  return options.filter((opt) => {
+    if (opt.key === '__uncategorized__') return true
+    const isAudioCat = audioCats.has(opt.key)
+    const isVideoCat = videoCats.has(opt.key)
+    if (entry.media_type === 'audio') {
+      return !(isVideoCat && !isAudioCat)
+    }
+    if (entry.media_type === 'video') {
+      return !(isAudioCat && !isVideoCat)
+    }
+    return true
+  })
+}
+
 export function EntryCard({
   entry,
   categoryOptions,
+  audioCategories,
+  videoCategories,
   onMove,
   dragEnabled,
 }: {
   entry: Entry
   categoryOptions: CategoryOption[]
+  audioCategories: Set<string>
+  videoCategories: Set<string>
   onMove: (entryId: number, targetKey: string) => void
   dragEnabled: boolean
 }) {
@@ -28,6 +52,11 @@ export function EntryCard({
   const [imgFailed, setImgFailed] = useState(false)
   const imgUrl = getImageUrl(entry.image_url)
 
+  const compatibleOptions = useMemo(
+    () => filterCompatibleOptions(categoryOptions, entry, audioCategories, videoCategories),
+    [categoryOptions, entry, audioCategories, videoCategories],
+  )
+
   return (
     <div
       ref={setNodeRef}
@@ -36,7 +65,7 @@ export function EntryCard({
       {...attributes}
       {...(dragEnabled ? listeners : {})}
     >
-      {categoryOptions.length > 1 && (
+      {compatibleOptions.length > 1 && (
         <div className="admin-card-move">
           <select
             value=""
@@ -52,7 +81,7 @@ export function EntryCard({
             <option value="" disabled>
               ↕️
             </option>
-            {categoryOptions.map((opt) => (
+            {compatibleOptions.map((opt) => (
               <option key={opt.key} value={opt.key}>
                 {opt.label}
               </option>

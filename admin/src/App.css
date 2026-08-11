@@ -163,6 +163,27 @@
   cursor: default;
 }
 
+.admin-button-success {
+  margin-top: 0;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(74, 222, 128, 0.5);
+  border-radius: 4px;
+  background-color: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.admin-button-success:hover:not(:disabled) {
+  background-color: rgba(74, 222, 128, 0.3);
+  border-color: rgba(74, 222, 128, 0.7);
+}
+
+.admin-button-success:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .admin-button-disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -492,9 +513,15 @@
 
 .admin-new-category {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 1.5rem;
-  max-width: 360px;
+  max-width: 460px;
+}
+
+.admin-new-category .admin-check {
+  flex-shrink: 0;
+  padding-bottom: 0;
 }
 
 .admin-new-category input {
@@ -746,10 +773,10 @@
 }
 
 .admin-sort-row {
-  flex: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr) 3.2rem 7.5rem auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   padding: 0.75rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
@@ -768,11 +795,12 @@
   opacity: 0.4;
   font-size: 0.85rem;
   letter-spacing: -0.2em;
+  text-align: center;
 }
 
 .admin-sort-name {
-  flex: 1;
   font-size: 0.95rem;
+  word-break: break-word;
 }
 
 /* Analytics dashboard ---------------------------------------------------- */
@@ -901,6 +929,21 @@
 .admin-badge-fraud {
   background-color: rgba(248, 113, 113, 0.22);
   color: #f87171;
+}
+
+.admin-badge-audio {
+  background-color: rgba(96, 165, 250, 0.22);
+  color: #60a5fa;
+}
+
+.admin-badge-video {
+  background-color: rgba(251, 146, 60, 0.22);
+  color: #fb923c;
+}
+
+.admin-badge-mixed {
+  background-color: rgba(167, 139, 250, 0.22);
+  color: #a78bfa;
 }
 
 .admin-analytics-footnote {

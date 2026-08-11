@@ -13,6 +13,7 @@ import { AdminNav } from '../components/AdminNav'
 import { EntryCard, type CategoryOption } from '../components/EntryCard'
 import { useAuth } from '../auth/AuthContext'
 import {
+  categoryTypeSets,
   fetchCategoryOrder,
   fetchEntries,
   updateEntriesOrder,
@@ -27,6 +28,10 @@ type Container = {
   key: string
   label: string
   entries: Entry[]
+}
+
+function entryCategory(e: Entry): string | null {
+  return e.media_type === 'video' ? e.video_category : e.category
 }
 
 function sortEntries(arr: Entry[]): Entry[] {
@@ -52,7 +57,7 @@ function buildContainers(
   const extraNames = [
     ...new Set(
       entries
-        .map((e) => e.category)
+        .map(entryCategory)
         .filter((c): c is string => !!c && !knownCategories.has(c)),
     ),
   ].sort()
@@ -63,13 +68,13 @@ function buildContainers(
     containers.push({
       key: name,
       label: name,
-      entries: sortEntries(entries.filter((e) => e.category === name)),
+      entries: sortEntries(entries.filter((e) => entryCategory(e) === name)),
     })
   }
   containers.push({
     key: UNCATEGORIZED_KEY,
     label: 'Uncategorized',
-    entries: sortEntries(entries.filter((e) => !e.category)),
+    entries: sortEntries(entries.filter((e) => !entryCategory(e))),
   })
   return containers
 }
@@ -93,10 +98,14 @@ function renumber(container: Container): Container {
 function CategorySection({
   container,
   categoryOptions,
+  audioCategories,
+  videoCategories,
   onMove,
 }: {
   container: Container
   categoryOptions: CategoryOption[]
+  audioCategories: Set<string>
+  videoCategories: Set<string>
   onMove: (entryId: number, targetKey: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: container.key })
@@ -107,6 +116,22 @@ function CategorySection({
     <section className={`admin-category${isOver ? ' is-over' : ''}`}>
       <header className="admin-category-head">
         <h3>{container.label}</h3>
+        {container.key !== UNCATEGORIZED_KEY && (
+          (() => {
+            const isAudio = audioCategories.has(container.key)
+            const isVideo = videoCategories.has(container.key)
+            if (isAudio && isVideo) {
+              return <span className="admin-badge admin-badge-mixed">Mixed</span>
+            }
+            if (isAudio) {
+              return <span className="admin-badge admin-badge-audio">Audio</span>
+            }
+            if (isVideo) {
+              return <span className="admin-badge admin-badge-video">Video</span>
+            }
+            return null
+          })()
+        )}
         <span className="admin-muted">{container.entries.length}</span>
         {container.entries.length > 0 && (
           <button
@@ -124,6 +149,8 @@ function CategorySection({
               key={entry.id}
               entry={entry}
               categoryOptions={categoryOptions}
+              audioCategories={audioCategories}
+              videoCategories={videoCategories}
               onMove={onMove}
               dragEnabled={reorderOn}
             />
@@ -132,6 +159,19 @@ function CategorySection({
       </div>
     </section>
   )
+}
+
+function isCompatible(entry: Entry, destKey: string, audioCats: Set<string>, videoCats: Set<string>): boolean {
+  if (destKey === UNCATEGORIZED_KEY) return true
+  const isAudioCat = audioCats.has(destKey)
+  const isVideoCat = videoCats.has(destKey)
+  if (entry.media_type === 'audio') {
+    return !(isVideoCat && !isAudioCat)
+  }
+  if (entry.media_type === 'video') {
+    return !(isAudioCat && !isVideoCat)
+  }
+  return true
 }
 
 export function EntriesPage() {
@@ -143,6 +183,8 @@ export function EntriesPage() {
   const [error, setError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [audioCategories, setAudioCategories] = useState<Set<string>>(new Set())
+  const [videoCategories, setVideoCategories] = useState<Set<string>>(new Set())
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -156,6 +198,9 @@ export function EntriesPage() {
         fetchEntries(),
         fetchCategoryOrder(),
       ])
+      const { audio, video } = categoryTypeSets(entries, categoryOrder)
+      setAudioCategories(audio)
+      setVideoCategories(video)
       setContainers(filterContainers(buildContainers(entries, categoryOrder), adminCategories))
       setOriginal(new Map(entries.map((e) => [e.id, e])))
       categoryOrderRef.current = categoryOrder
@@ -207,13 +252,11 @@ export function EntriesPage() {
         insertIdx = next[dstIdx].entries.findIndex((e) => String(e.id) === overId)
       }
 
-      const dstKey = next[dstIdx].key
-      const movedWithCategory: Entry = {
-        ...moved,
-        category: dstKey === UNCATEGORIZED_KEY ? null : dstKey,
-      }
+      // Cross-category moves are disabled; use the card dropdown instead.
+      if (srcIdx !== dstIdx) return prev
+
       const newDstEntries = [...next[dstIdx].entries]
-      newDstEntries.splice(insertIdx, 0, movedWithCategory)
+      newDstEntries.splice(insertIdx, 0, moved)
       next[dstIdx] = { ...next[dstIdx], entries: newDstEntries }
 
       next[srcIdx] = renumber(next[srcIdx])
@@ -225,6 +268,18 @@ export function EntriesPage() {
   }
 
   function moveEntry(entryId: number, destKey: string) {
+    let movedEntry: Entry | undefined
+    for (const c of containers) {
+      movedEntry = c.entries.find((e) => e.id === entryId)
+      if (movedEntry) break
+    }
+    if (!movedEntry) return
+    if (!isCompatible(movedEntry, destKey, audioCategories, videoCategories)) {
+      setError(`Cannot move ${movedEntry.media_type} entry to a ${movedEntry.media_type === 'audio' ? 'video' : 'audio'}-only category.`)
+      return
+    }
+    setError(null)
+
     setContainers((prev) => {
       const next = prev.map((c) => ({ ...c, entries: [...c.entries] }))
       const srcIdx = next.findIndex((c) => c.entries.some((e) => e.id === entryId))
@@ -240,9 +295,11 @@ export function EntriesPage() {
       const dstIdx = next.findIndex((c) => c.key === destKey)
       if (dstIdx === -1) return prev
 
+      const isVideo = moved.media_type === 'video'
       const movedWithCategory: Entry = {
         ...moved,
-        category: destKey === UNCATEGORIZED_KEY ? null : destKey,
+        category: isVideo ? moved.category : (destKey === UNCATEGORIZED_KEY ? null : destKey),
+        video_category: isVideo ? (destKey === UNCATEGORIZED_KEY ? null : destKey) : moved.video_category,
       }
       next[dstIdx] = {
         ...next[dstIdx],
@@ -270,8 +327,8 @@ export function EntriesPage() {
       for (const c of containers) {
         for (const e of c.entries) {
           const orig = original.get(e.id)
-          if (orig && (orig.category !== e.category || orig.number !== e.number)) {
-            updates.push({ id: e.id, category: e.category, number: e.number })
+          if (orig && (orig.category !== e.category || orig.video_category !== e.video_category || orig.number !== e.number)) {
+            updates.push({ id: e.id, category: e.category, video_category: e.video_category, number: e.number })
           }
         }
       }
@@ -317,6 +374,8 @@ export function EntriesPage() {
                 key={c.key}
                 container={c}
                 categoryOptions={categoryOptions}
+                audioCategories={audioCategories}
+                videoCategories={videoCategories}
                 onMove={moveEntry}
               />
             ))}
@@ -325,7 +384,7 @@ export function EntriesPage() {
 
         {categoryOptions.length > 1 && (
           <p className="admin-board-hint admin-muted">
-            Drag cards to reorder within a category or move them across categories. Click Save changes to persist.
+            Drag cards to reorder within a category. Use the card dropdown to move across categories. Click Save changes to persist.
           </p>
         )}
       </main>
@@ -339,7 +398,7 @@ export function EntriesPage() {
           >
             Cancel
           </button>
-          <button className="admin-button" onClick={handleSave} disabled={saving}>
+          <button className="admin-button-success" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save changes'}
           </button>
         </div>
