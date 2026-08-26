@@ -397,7 +397,7 @@ export function EntryFormPage() {
                 disabled={categoryDisabled}
               >
                 {adminCategories === null && (
-                  <option value="">No category</option>
+                  <option value="">Drafts</option>
                 )}
                 {availableCategories.map((c) => (
                   <option key={c} value={c}>
@@ -420,7 +420,7 @@ export function EntryFormPage() {
                 disabled={categoryDisabled}
               >
                 {adminCategories === null && (
-                  <option value="">No category</option>
+                  <option value="">Drafts</option>
                 )}
                 {availableCategories.map((c) => (
                   <option key={c} value={c}>
@@ -543,7 +543,7 @@ export function EntryFormPage() {
               </button>
               {hasCategory && (
                 <span className="admin-muted admin-delete-hint">
-                  Move the entry to Uncategorized first to enable deletion.
+                  Move the entry to Drafts first to enable deletion.
                 </span>
               )}
             </div>

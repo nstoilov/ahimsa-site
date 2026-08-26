@@ -17,7 +17,7 @@ function filterCompatibleOptions(
   videoCats: Set<string>,
 ): CategoryOption[] {
   return options.filter((opt) => {
-    if (opt.key === '__uncategorized__') return true
+    if (opt.key === '__drafts__') return true
     const isAudioCat = audioCats.has(opt.key)
     const isVideoCat = videoCats.has(opt.key)
     if (entry.media_type === 'audio') {

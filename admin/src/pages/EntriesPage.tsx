@@ -22,7 +22,7 @@ import {
   type OrderUpdate,
 } from '../lib/entries'
 
-const UNCATEGORIZED_KEY = '__uncategorized__'
+const DRAFTS_KEY = '__drafts__'
 
 type Container = {
   key: string
@@ -72,8 +72,8 @@ function buildContainers(
     })
   }
   containers.push({
-    key: UNCATEGORIZED_KEY,
-    label: 'Uncategorized',
+    key: DRAFTS_KEY,
+    label: 'Drafts',
     entries: sortEntries(entries.filter((e) => !entryCategory(e))),
   })
   return containers
@@ -90,7 +90,7 @@ function filterContainers(
   for (const c of containers) {
     if (allowed.has(c.key)) {
       result.push(c)
-    } else if (c.key === UNCATEGORIZED_KEY) {
+    } else if (c.key === DRAFTS_KEY) {
       const mine = c.entries.filter((e) => e.created_by === adminEmail)
       if (mine.length > 0) {
         result.push({ ...c, entries: mine })
@@ -128,7 +128,7 @@ function CategorySection({
     <section className={`admin-category${isOver ? ' is-over' : ''}`}>
       <header className="admin-category-head">
         <h3>{container.label}</h3>
-        {container.key !== UNCATEGORIZED_KEY && (
+        {container.key !== DRAFTS_KEY && (
           (() => {
             const isAudio = audioCategories.has(container.key)
             const isVideo = videoCategories.has(container.key)
@@ -174,7 +174,7 @@ function CategorySection({
 }
 
 function isCompatible(entry: Entry, destKey: string, audioCats: Set<string>, videoCats: Set<string>): boolean {
-  if (destKey === UNCATEGORIZED_KEY) return true
+  if (destKey === DRAFTS_KEY) return true
   const isAudioCat = audioCats.has(destKey)
   const isVideoCat = videoCats.has(destKey)
   if (entry.media_type === 'audio') {
@@ -329,8 +329,8 @@ export function EntriesPage() {
       const isVideo = moved.media_type === 'video'
       const movedWithCategory: Entry = {
         ...moved,
-        category: isVideo ? moved.category : (destKey === UNCATEGORIZED_KEY ? null : destKey),
-        video_category: isVideo ? (destKey === UNCATEGORIZED_KEY ? null : destKey) : moved.video_category,
+        category: isVideo ? moved.category : (destKey === DRAFTS_KEY ? null : destKey),
+        video_category: isVideo ? (destKey === DRAFTS_KEY ? null : destKey) : moved.video_category,
       }
       next[dstIdx] = {
         ...next[dstIdx],
