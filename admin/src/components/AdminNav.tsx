@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 export function AdminNav() {
-  const { user, signOut, isFullAdmin } = useAuth()
+  const { user, signOut, isAdmin, isFullAdmin } = useAuth()
   return (
     <header className="admin-topnav">
       <Link to="/entries" className="admin-brand">
@@ -10,7 +10,7 @@ export function AdminNav() {
       </Link>
       <nav className="admin-links">
         <Link to="/entries">Entries</Link>
-        {isFullAdmin && <Link to="/analytics">Analytics</Link>}
+        {isAdmin && <Link to="/analytics">Analytics</Link>}
         {isFullAdmin && <Link to="/categories">Categories</Link>}
       </nav>
       <div className="admin-account">

@@ -196,7 +196,7 @@ export function AnalyticsPage() {
 
   const sortedByEntry = useMemo(() => {
     if (!activeResult) return []
-    const rows = [...activeResult.byEntry]
+    const rows = activeResult.byEntry.filter((r) => r.seconds_watched > 0)
     rows.sort((a, b) => {
       const cmp = compareEntryRows(a, b, sort.key)
       return sort.dir === 'asc' ? cmp : -cmp

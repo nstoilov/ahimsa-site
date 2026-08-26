@@ -43,13 +43,14 @@ function sanitizeFileName(name: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-async function isAdmin(supabaseUrl: string, anonKey: string, jwt: string): Promise<boolean> {
+async function getAdmin(supabaseUrl: string, anonKey: string, jwt: string): Promise<{ admin: boolean; fullAdmin: boolean }> {
   const sb = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${jwt}` } },
   })
-  const { data, error } = await sb.from('admins').select('email').maybeSingle()
-  if (error) return false
-  return !!data
+  const { data, error } = await sb.from('admins').select('email, category').maybeSingle()
+  if (error || !data) return { admin: false, fullAdmin: false }
+  const category = data.category == null ? '' : String(data.category).trim()
+  return { admin: true, fullAdmin: category === '' }
 }
 
 async function presignR2Put(
@@ -100,12 +101,52 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: 'R2 credentials not configured' }, 500)
   }
 
-  let body: { kind?: string; filename?: string; contentType?: string }
+  let body: {
+    action?: string
+    kind?: string
+    filename?: string
+    contentType?: string
+    keys?: string[]
+  }
   try {
     body = await req.json()
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
+
+  const adminStatus = await getAdmin(supabaseUrl, anonKey, jwt)
+  if (!adminStatus.admin) {
+    return json({ error: 'Forbidden: admin only' }, 403)
+  }
+
+  const action = body.action ?? 'presign'
+
+  if (action === 'delete') {
+    if (!adminStatus.fullAdmin) {
+      return json({ error: 'Forbidden: full admin only' }, 403)
+    }
+    const keys = Array.isArray(body.keys)
+      ? body.keys.filter((k): k is string => typeof k === 'string' && k.length > 0)
+      : []
+    if (keys.length === 0) {
+      return json({ error: 'keys required' }, 400)
+    }
+    const endpoint = `https://${accountId}.r2.cloudflarestorage.com`
+    const aws = new AwsClient({ accessKeyId, secretAccessKey, region, service: 's3' })
+    const errors: string[] = []
+    let deleted = 0
+    for (const key of keys) {
+      try {
+        const res = await aws.fetch(`${endpoint}/${bucket}/${key}`, { method: 'DELETE' })
+        if (res.ok || res.status === 404) deleted++
+        else errors.push(`${key} (${res.status})`)
+      } catch (e) {
+        errors.push(`${key} (${e instanceof Error ? e.message : 'network error'})`)
+      }
+    }
+    return json({ deleted, errors })
+  }
+
   const kind = body.kind ?? ''
   if (!ALLOWED_KINDS.has(kind)) {
     return json({ error: 'Invalid kind (expected images|audio|videos)' }, 400)
@@ -113,11 +154,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const filename = body.filename ?? ''
   if (!filename) {
     return json({ error: 'filename required' }, 400)
-  }
-
-  // Gate on admin role using the caller's own JWT (RLS self-read on admins).
-  if (!(await isAdmin(supabaseUrl, anonKey, jwt))) {
-    return json({ error: 'Forbidden: admin only' }, 403)
   }
 
   const stamp = Date.now()
@@ -132,7 +168,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     bucket,
     region,
     r2Key,
-    900, // 15 minutes
+    3600, // 1 hour (tolerates slow upload links)
   )
 
   return json({ uploadUrl, key: rawKey })

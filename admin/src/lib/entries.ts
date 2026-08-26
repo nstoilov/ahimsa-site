@@ -71,8 +71,15 @@ export async function updateEntry(id: number, input: EntryInput): Promise<Entry>
 }
 
 export async function deleteEntry(id: number): Promise<void> {
-  const { error } = await supabase.from('entries').delete().eq('id', id)
+  const { data, error } = await supabase
+    .from('entries')
+    .delete()
+    .eq('id', id)
+    .select()
   if (error) throw error
+  if (!data || data.length === 0) {
+    throw new Error('Entry was not deleted — it may not exist, or you are not authorized to delete it.')
+  }
 }
 
 export async function fetchCategories(): Promise<string[]> {

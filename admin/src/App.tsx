@@ -60,7 +60,7 @@ function AppRoutes() {
       <Route
         path="/analytics"
         element={
-          <RequireAuth requireAdmin requireFullAdmin>
+          <RequireAuth requireAdmin>
             <AnalyticsPage />
           </RequireAuth>
         }

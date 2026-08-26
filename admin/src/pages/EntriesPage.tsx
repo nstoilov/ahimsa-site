@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   DndContext,
   PointerSensor,
@@ -176,6 +176,8 @@ function isCompatible(entry: Entry, destKey: string, audioCats: Set<string>, vid
 
 export function EntriesPage() {
   const { adminCategories } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [containers, setContainers] = useState<Container[]>([])
   const [original, setOriginal] = useState<Map<number, Entry>>(new Map())
   const categoryOrderRef = useRef<CategoryOrder[]>([])
@@ -185,6 +187,23 @@ export function EntriesPage() {
   const [saving, setSaving] = useState(false)
   const [audioCategories, setAudioCategories] = useState<Set<string>>(new Set())
   const [videoCategories, setVideoCategories] = useState<Set<string>>(new Set())
+  const [notice, setNotice] = useState<{ kind: 'success' | 'warning'; message: string } | null>(null)
+
+  useEffect(() => {
+    const st = location.state as { deletedEntry?: string; r2Warning?: string | null } | null
+    if (!st?.deletedEntry) return
+    const message = st.r2Warning
+      ? `Deleted “${st.deletedEntry}”, but media cleanup failed: ${st.r2Warning}`
+      : `Entry deleted: “${st.deletedEntry}”.`
+    setNotice({ kind: st.r2Warning ? 'warning' : 'success', message })
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, navigate])
+
+  useEffect(() => {
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), 6000)
+    return () => clearTimeout(t)
+  }, [notice])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -365,6 +384,9 @@ export function EntriesPage() {
         </div>
 
         {error && <p className="admin-error">{error}</p>}
+        {notice && (
+          <p className={`admin-notice admin-notice-${notice.kind}`}>{notice.message}</p>
+        )}
         {loading ? (
           <p className="admin-muted">Loading…</p>
         ) : (

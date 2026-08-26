@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import {
   createEntry,
   categoryTypeSets,
+  deleteEntry,
   fetchCategoryOrder,
   fetchEntries,
   fetchEntry,
@@ -15,15 +16,15 @@ import {
   type EntryInput,
   type MediaType,
 } from '../lib/entries'
-import { getAudioUrl, getImageUrl, getVideoUrl } from '../lib/media'
-import { presignAndUpload } from '../lib/r2upload'
+import { getAudioUrl, getImageUrl, getVideoUrl, prefixedR2Key } from '../lib/media'
+import { deleteR2Objects, presignAndUpload } from '../lib/r2upload'
 
 type Mode = 'create' | 'edit'
 
 export function EntryFormPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { adminCategories } = useAuth()
+  const { adminCategories, isFullAdmin } = useAuth()
   const mode: Mode = id ? 'edit' : 'create'
   const entryId = id ? Number(id) : NaN
 
@@ -52,19 +53,23 @@ export function EntryFormPage() {
 
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [upload, setUpload] = useState<{ label: string; percent: number } | null>(null)
   const [audioCategories, setAudioCategories] = useState<Set<string>>(new Set())
   const [videoCategories, setVideoCategories] = useState<Set<string>>(new Set())
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const audioInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     fetchCategoryOrder()
       .then(setCategories)
-      .catch(() => {
-        // categories are optional suggestions; ignore failures
+      .catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error('[EntryForm] category_order read failed', e)
       })
     fetchEntries()
       .then((entries) => {
@@ -74,8 +79,9 @@ export function EntryFormPage() {
             setAudioCategories(audio)
             setVideoCategories(video)
           })
-          .catch(() => {
-            // ignore failures
+          .catch((e) => {
+            // eslint-disable-next-line no-console
+            console.error('[EntryForm] category_order read failed', e)
           })
       })
       .catch(() => {
@@ -190,6 +196,33 @@ export function EntryFormPage() {
     return max + 1
   }
 
+  const hasCategory = !!(originalCategory || originalVideoCategory)
+
+  async function handleDelete() {
+    if (mode !== 'edit' || !isFullAdmin || hasCategory) return
+    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return
+    setDeleting(true)
+    setError(null)
+    try {
+      const keys: string[] = []
+      if (existingImagePath) keys.push(prefixedR2Key('images', existingImagePath))
+      if (existingAudioPath) keys.push(prefixedR2Key('audio', existingAudioPath))
+      if (existingVideoPath) keys.push(prefixedR2Key('videos', existingVideoPath))
+      await deleteEntry(entryId)
+      let r2Warning: string | null = null
+      try {
+        await deleteR2Objects(keys)
+      } catch (e) {
+        r2Warning = e instanceof Error ? e.message : String(e)
+      }
+      navigate('/entries', { replace: true, state: { deletedEntry: title, r2Warning } })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete entry.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -225,19 +258,24 @@ export function EntryFormPage() {
     }
 
     setSubmitting(true)
+    const controller = new AbortController()
+    abortRef.current = controller
     try {
       let imagePath = existingImagePath
       let audioPath = existingAudioPath
       let videoPath = existingVideoPath
 
       if (imageFile) {
-        imagePath = await presignAndUpload('images', imageFile)
+        setUpload({ label: 'Uploading image', percent: 0 })
+        imagePath = await presignAndUpload('images', imageFile, (p) => setUpload({ label: 'Uploading image', percent: p }), controller.signal)
       }
       if (mediaType === 'audio' && audioFile) {
-        audioPath = await presignAndUpload('audio', audioFile)
+        setUpload({ label: 'Uploading audio', percent: 0 })
+        audioPath = await presignAndUpload('audio', audioFile, (p) => setUpload({ label: 'Uploading audio', percent: p }), controller.signal)
       }
       if (mediaType === 'video' && videoFile) {
-        videoPath = await presignAndUpload('videos', videoFile)
+        setUpload({ label: 'Uploading video', percent: 0 })
+        videoPath = await presignAndUpload('videos', videoFile, (p) => setUpload({ label: 'Uploading video', percent: p }), controller.signal)
       }
 
       const input: EntryInput = {
@@ -260,8 +298,14 @@ export function EntryFormPage() {
       }
       navigate('/entries', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save entry.')
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Upload cancelled.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to save entry.')
+      }
     } finally {
+      setUpload(null)
+      abortRef.current = null
       setSubmitting(false)
     }
   }
@@ -462,9 +506,48 @@ export function EntryFormPage() {
 
           {error && <p className="admin-error">{error}</p>}
 
-          <button type="submit" className="admin-button" disabled={submitting}>
+          {upload && (
+            <div className="admin-upload-progress">
+              <div className="admin-upload-progress-head">
+                <span>{upload.label} {Math.round(upload.percent * 100)}%</span>
+                <button
+                  type="button"
+                  className="admin-button admin-button-sm admin-button-ghost"
+                  onClick={() => abortRef.current?.abort()}
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className="admin-upload-progress-track">
+                <div
+                  className="admin-upload-progress-fill"
+                  style={{ width: `${upload.percent * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <button type="submit" className="admin-button" disabled={submitting || deleting}>
             {submitting ? 'Saving…' : mode === 'create' ? 'Create entry' : 'Save changes'}
           </button>
+
+          {mode === 'edit' && isFullAdmin && (
+            <div className="admin-delete-field">
+              <button
+                type="button"
+                className="admin-button admin-button-danger"
+                onClick={handleDelete}
+                disabled={deleting || submitting || hasCategory}
+              >
+                {deleting ? 'Deleting…' : 'Delete entry'}
+              </button>
+              {hasCategory && (
+                <span className="admin-muted admin-delete-hint">
+                  Move the entry to Uncategorized first to enable deletion.
+                </span>
+              )}
+            </div>
+          )}
         </form>
       </main>
     </div>

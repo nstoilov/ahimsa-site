@@ -252,6 +252,25 @@
   font-size: 0.85rem;
 }
 
+.admin-notice {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.admin-notice-success {
+  background-color: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.admin-notice-warning {
+  background-color: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
 .admin-topnav {
   display: flex;
   align-items: center;
@@ -890,12 +909,21 @@
 
 .admin-analytics-table-wrap {
   margin-bottom: 1rem;
+  max-height: 28rem;
+  overflow: auto;
 }
 
 .admin-analytics-table-wrap h3 {
   margin: 0 0 0.75rem;
   font-weight: 400;
   font-size: 0.95rem;
+}
+
+.admin-analytics-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #1a1a2e;
 }
 
 .admin-analytics-table th.num,
@@ -949,6 +977,48 @@
 .admin-analytics-footnote {
   font-size: 0.75rem;
   margin-top: 0.5rem;
+}
+
+.admin-upload-progress {
+  margin: 0.5rem 0;
+}
+
+.admin-upload-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+
+.admin-upload-progress-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.admin-upload-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background-color: #a78bfa;
+  transition: width 0.15s ease-out;
+}
+
+.admin-delete-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-delete-hint {
+  font-size: 0.8rem;
 }
 
 @media (max-width: 640px) {
