@@ -15,6 +15,7 @@ export type Entry = {
   video_url: string | null
   number: number | null
   created_at: string | null
+  created_by: string | null
 }
 
 export type EntryInput = {
@@ -49,10 +50,13 @@ export async function fetchEntry(id: number): Promise<Entry> {
   return data as Entry
 }
 
-export async function createEntry(input: EntryInput): Promise<Entry> {
+export async function createEntry(
+  input: EntryInput,
+  createdByEmail: string | null,
+): Promise<Entry> {
   const { data, error } = await supabase
     .from('entries')
-    .insert(input)
+    .insert({ ...input, created_by: createdByEmail })
     .select()
     .single()
   if (error) throw error

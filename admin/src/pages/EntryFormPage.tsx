@@ -24,7 +24,7 @@ type Mode = 'create' | 'edit'
 export function EntryFormPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { adminCategories, isFullAdmin } = useAuth()
+  const { adminCategories, isFullAdmin, user } = useAuth()
   const mode: Mode = id ? 'edit' : 'create'
   const entryId = id ? Number(id) : NaN
 
@@ -292,7 +292,7 @@ export function EntryFormPage() {
       }
 
       if (mode === 'create') {
-        await createEntry(input)
+        await createEntry(input, user?.email ?? null)
       } else {
         await updateEntry(entryId, input)
       }

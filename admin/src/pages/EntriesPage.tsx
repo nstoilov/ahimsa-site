@@ -82,10 +82,22 @@ function buildContainers(
 function filterContainers(
   containers: Container[],
   adminCategories: string[] | null,
+  adminEmail: string | null,
 ): Container[] {
   if (adminCategories === null) return containers
   const allowed = new Set(adminCategories)
-  return containers.filter((c) => allowed.has(c.key))
+  const result: Container[] = []
+  for (const c of containers) {
+    if (allowed.has(c.key)) {
+      result.push(c)
+    } else if (c.key === UNCATEGORIZED_KEY) {
+      const mine = c.entries.filter((e) => e.created_by === adminEmail)
+      if (mine.length > 0) {
+        result.push({ ...c, entries: mine })
+      }
+    }
+  }
+  return result
 }
 
 function renumber(container: Container): Container {
@@ -175,7 +187,7 @@ function isCompatible(entry: Entry, destKey: string, audioCats: Set<string>, vid
 }
 
 export function EntriesPage() {
-  const { adminCategories } = useAuth()
+  const { adminCategories, user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [containers, setContainers] = useState<Container[]>([])
@@ -220,7 +232,7 @@ export function EntriesPage() {
       const { audio, video } = categoryTypeSets(entries, categoryOrder)
       setAudioCategories(audio)
       setVideoCategories(video)
-      setContainers(filterContainers(buildContainers(entries, categoryOrder), adminCategories))
+      setContainers(filterContainers(buildContainers(entries, categoryOrder), adminCategories, user?.email ?? null))
       setOriginal(new Map(entries.map((e) => [e.id, e])))
       categoryOrderRef.current = categoryOrder
       setDirty(false)
@@ -366,7 +378,7 @@ export function EntriesPage() {
 
   function handleCancel() {
     const entries = Array.from(original.values())
-    setContainers(filterContainers(buildContainers(entries, categoryOrderRef.current), adminCategories))
+    setContainers(filterContainers(buildContainers(entries, categoryOrderRef.current), adminCategories, user?.email ?? null))
     setDirty(false)
   }
 
