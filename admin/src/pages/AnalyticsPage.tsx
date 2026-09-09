@@ -5,7 +5,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts'
 import { AdminNav } from '../components/AdminNav'
 import { fetchEntries, type Entry } from '../lib/entries'
@@ -74,11 +73,17 @@ function PieCard({
   const data = useMemo(() => {
     const sortable = rows.filter((r) => r.seconds_watched > 0)
     sortable.sort((a, b) => b.seconds_watched - a.seconds_watched)
-    const withPct = topNWithOther(sortable, TOP_N).map((r) => ({
-      ...r,
-      label: `${r.label} (${totalSeconds > 0 ? Math.round((r.seconds_watched / totalSeconds) * 100) : 0}%)`,
-    }))
-    return withPct
+    return topNWithOther(sortable, TOP_N)
+      .map((r) => ({
+        ...r,
+        pct: totalSeconds > 0 ? r.seconds_watched / totalSeconds : 0,
+      }))
+      .sort((a, b) => b.pct - a.pct)
+      .map((r, i) => ({
+        ...r,
+        label: `${r.label} (${Math.round(r.pct * 100)}%)`,
+        fill: r.key === '__other__' ? OTHER_COLOR : PIE_PALETTE[i % PIE_PALETTE.length],
+      }))
   }, [rows, totalSeconds])
 
   return (
@@ -87,40 +92,42 @@ function PieCard({
       {data.length === 0 || totalSeconds === 0 ? (
         <p className="admin-muted admin-analytics-empty">No watch time in this period.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={320}>
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="seconds_watched"
-              nameKey="label"
-              innerRadius={55}
-              outerRadius={90}
-              paddingAngle={1}
-              stroke="rgba(0,0,0,0.2)"
-            >
-              {data.map((d, i) => (
-                <Cell
-                  key={d.key}
-                  fill={d.key === '__other__' ? OTHER_COLOR : PIE_PALETTE[i % PIE_PALETTE.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value) => formatSeconds(Number(value)) as unknown as string}
-              contentStyle={{
-                backgroundColor: '#232342',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 8,
-                fontSize: '0.85rem',
-              }}
-            />
-            <Legend
-              verticalAlign="bottom"
-              height={84}
-              wrapperStyle={{ fontSize: '0.8rem', opacity: 0.85 }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <>
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="seconds_watched"
+                nameKey="label"
+                innerRadius={55}
+                outerRadius={90}
+                paddingAngle={1}
+                stroke="rgba(0,0,0,0.2)"
+              >
+                {data.map((d) => (
+                  <Cell key={d.key} fill={d.fill} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value) => formatSeconds(Number(value)) as unknown as string}
+                contentStyle={{
+                  backgroundColor: '#232342',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 8,
+                  fontSize: '0.85rem',
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="admin-legend">
+            {data.map((d) => (
+              <span key={d.key} className="admin-legend-item">
+                <span className="admin-legend-swatch" style={{ backgroundColor: d.fill }} />
+                {d.label}
+              </span>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
@@ -218,11 +225,13 @@ export function AnalyticsPage() {
     const total = activeResult.totals.seconds_watched
     const sortable = activeResult.byAuthor.filter((r) => r.seconds_watched > 0)
     sortable.sort((a, b) => b.seconds_watched - a.seconds_watched)
-    return topNWithOther(sortable, TOP_N).map((r) => ({
-      key: r.key,
-      label: r.label,
-      share: total > 0 ? r.seconds_watched / total : 0,
-    }))
+    return topNWithOther(sortable, TOP_N)
+      .map((r) => ({
+        key: r.key,
+        label: r.label,
+        share: total > 0 ? r.seconds_watched / total : 0,
+      }))
+      .sort((a, b) => b.share - a.share)
   }, [activeResult])
 
   function handleSort(key: SortKey) {
