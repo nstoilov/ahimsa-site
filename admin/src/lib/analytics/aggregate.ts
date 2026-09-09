@@ -48,6 +48,16 @@ export type EntryLookup = Map<number, { title: string; author: string | null }>
 
 const UNKNOWN = 'Unknown'
 
+/**
+ * Grouping key for the "by author" breakdown. Null, empty, and whitespace-only
+ * authors all collapse to "Unknown" so labels never render blank. Shared by the
+ * aggregation and the author filter so both agree on the key.
+ */
+export function authorGroupKey(author: string | null): string {
+  const name = author?.trim()
+  return name ? name : UNKNOWN
+}
+
 function distinctCount<T>(values: IterableIterator<T>, isSet: (v: T) => boolean): number {
   const set = new Set<T>()
   for (const v of values) {
@@ -128,7 +138,8 @@ export function aggregate(sessions: SessionRow[], entries: EntryLookup): Analyti
     const sortedByEnd = [...bucket].sort(
       (a, b) => new Date(b.ended_at).getTime() - new Date(a.ended_at).getTime(),
     )
-    const historicalAuthor = sortedByEnd[0]?.author ?? null
+    const lastAuthor = sortedByEnd[0]?.author ?? null
+    const historicalAuthor = lastAuthor?.trim() || null
     const lookup = entries.get(contentId)
     const title = lookup?.title ?? `Entry #${contentId} (removed)`
     byEntry.push({
@@ -151,7 +162,7 @@ export function aggregate(sessions: SessionRow[], entries: EntryLookup): Analyti
   // --- By author (denormalized, historical) ---
   const byAuthor = aggregateGroup(
     sessions,
-    (s) => s.author ?? UNKNOWN,
+    (s) => authorGroupKey(s.author),
     (key) => key,
   )
 

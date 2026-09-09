@@ -12,6 +12,7 @@ import { fetchEntries, type Entry } from '../lib/entries'
 import { supabase } from '../lib/supabase'
 import {
   aggregate,
+  authorGroupKey,
   computeSessions,
   defaultPeriodValue,
   fetchPlaybackEvents,
@@ -184,15 +185,23 @@ export function AnalyticsPage() {
   const [sessions, setSessions] = useState<SessionRow[]>([])
   const [lookup, setLookup] = useState<EntryLookup>(new Map())
   const [selectedAuthor, setSelectedAuthor] = useState<string>('All')
+  const [selectedTier, setSelectedTier] = useState<'all' | 'paid' | 'free'>('all')
+
+  const filtersActive = selectedAuthor !== 'All' || selectedTier !== 'all'
 
   const filteredResult = useMemo(() => {
-    if (selectedAuthor === 'All' || sessions.length === 0) return null
-    const filtered = sessions.filter((s) => s.author === selectedAuthor)
-    if (filtered.length === 0) return null
+    if (!filtersActive || sessions.length === 0) return null
+    const filtered = sessions.filter((s) => {
+      if (selectedAuthor !== 'All' && authorGroupKey(s.author) !== selectedAuthor) return false
+      if (selectedTier !== 'all' && s.tier !== selectedTier) return false
+      return true
+    })
     return aggregate(filtered, lookup)
-  }, [selectedAuthor, sessions, lookup])
+  }, [selectedAuthor, selectedTier, sessions, lookup])
 
   const activeResult = filteredResult ?? result
+
+  const noMatch = filteredResult !== null && filteredResult.totals.plays === 0
 
   const sortedByEntry = useMemo(() => {
     if (!activeResult) return []
@@ -203,6 +212,18 @@ export function AnalyticsPage() {
     })
     return rows
   }, [activeResult, sort])
+
+  const authorShareRows = useMemo(() => {
+    if (!activeResult) return []
+    const total = activeResult.totals.seconds_watched
+    const sortable = activeResult.byAuthor.filter((r) => r.seconds_watched > 0)
+    sortable.sort((a, b) => b.seconds_watched - a.seconds_watched)
+    return topNWithOther(sortable, TOP_N).map((r) => ({
+      key: r.key,
+      label: r.label,
+      share: total > 0 ? r.seconds_watched / total : 0,
+    }))
+  }, [activeResult])
 
   function handleSort(key: SortKey) {
     setSort((prev) => {
@@ -249,6 +270,7 @@ export function AnalyticsPage() {
       setLookup(lookup)
       setResult(aggregate(sessions, lookup))
       setSelectedAuthor('All')
+      setSelectedTier('all')
       setDiag({
         periodStart: period.start,
         periodEnd: period.end,
@@ -360,6 +382,32 @@ export function AnalyticsPage() {
               </div>
             )}
 
+            {sessions.length > 0 && (
+              <div className="admin-analytics-author">
+                <span className="admin-muted">Tier</span>
+                <div className="admin-media-toggle">
+                  <button
+                    className={selectedTier === 'all' ? 'is-active' : ''}
+                    onClick={() => setSelectedTier('all')}
+                  >
+                    All
+                  </button>
+                  <button
+                    className={selectedTier === 'paid' ? 'is-active' : ''}
+                    onClick={() => setSelectedTier('paid')}
+                  >
+                    Paid
+                  </button>
+                  <button
+                    className={selectedTier === 'free' ? 'is-active' : ''}
+                    onClick={() => setSelectedTier('free')}
+                  >
+                    Free
+                  </button>
+                </div>
+              </div>
+            )}
+
             <section className="admin-analytics-stats">
               <div className="admin-stat">
                 <span className="admin-stat-value">{formatSeconds(activeResult?.totals.seconds_watched ?? 0)}</span>
@@ -379,7 +427,11 @@ export function AnalyticsPage() {
               </div>
             </section>
 
-            {activeResult?.totals.plays === 0 ? (
+            {noMatch ? (
+              <div className="admin-analytics-empty">
+                <p className="admin-muted">No sessions match the selected filters.</p>
+              </div>
+            ) : activeResult?.totals.plays === 0 ? (
               <div className="admin-analytics-empty">
                 <p className="admin-muted">
                   No plays recorded in this period. Raw events fetched: {rawCount}.
@@ -467,8 +519,8 @@ export function AnalyticsPage() {
                 <section className="admin-analytics-pies">
                   <PieCard
                     title="By author"
-                    rows={result.byAuthor}
-                    totalSeconds={result.totals.seconds_watched}
+                    rows={activeResult!.byAuthor}
+                    totalSeconds={activeResult!.totals.seconds_watched}
                   />
                   <PieCard
                     title="By entry"
@@ -480,6 +532,30 @@ export function AnalyticsPage() {
                     rows={activeResult!.byTier}
                     totalSeconds={activeResult!.totals.seconds_watched}
                   />
+                </section>
+
+                <section className="admin-analytics-table-wrap">
+                  <h3>Authors</h3>
+                  {authorShareRows.length === 0 ? (
+                    <p className="admin-muted">No watch time in this period.</p>
+                  ) : (
+                    <table className="admin-table admin-analytics-table">
+                      <thead>
+                        <tr>
+                          <th>Author</th>
+                          <th className="num">Percent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {authorShareRows.map((r) => (
+                          <tr key={r.key}>
+                            <td>{r.label}</td>
+                            <td className="num">{formatPct(r.share)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </section>
 
                 <section className="admin-analytics-table-wrap">

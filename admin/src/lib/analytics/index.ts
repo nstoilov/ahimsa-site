@@ -11,6 +11,7 @@ export {
 export { computeSessions, type SessionRow } from './secondsWatched'
 export {
   aggregate,
+  authorGroupKey,
   topNWithOther,
   type Totals,
   type GroupRow,
