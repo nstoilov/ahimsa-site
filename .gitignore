@@ -10,3 +10,9 @@ dist/
 
 # dependencies
 node_modules/
+
+# local-only docs & manual migrations
+BLOG.md
+admin/*.md
+admin/supabase/*.sql
+admin/supabase/.temp/
