@@ -63,6 +63,8 @@ export function EntryFormPage() {
   const audioInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const mediaTypeTouchedRef = useRef(false)
+  const categoryTouchedRef = useRef(false)
 
   useEffect(() => {
     fetchCategoryOrder()
@@ -116,7 +118,7 @@ export function EntryFormPage() {
     adminCategories !== null && adminCategories.length === 1
 
   useEffect(() => {
-    if (mode === 'create' && categoryDisabled && availableCategories.length === 1) {
+    if (mode === 'create' && categoryDisabled && !categoryTouchedRef.current && availableCategories.length === 1) {
       if (mediaType === 'audio') {
         setCategory(availableCategories[0])
         setVideoCategory('')
@@ -126,6 +128,19 @@ export function EntryFormPage() {
       }
     }
   }, [mode, categoryDisabled, availableCategories, mediaType])
+
+  useEffect(() => {
+    if (mode !== 'create' || mediaTypeTouchedRef.current) return
+    if (adminCategories === null || adminCategories.length === 0) return
+    const myCats = categories
+      .map((c) => c.name)
+      .filter((c) => adminCategories.includes(c))
+    if (myCats.length === 0) return
+    const allVideo = myCats.every(
+      (c) => videoCategories.has(c) && !audioCategories.has(c),
+    )
+    if (allVideo) setMediaType('video')
+  }, [mode, adminCategories, categories, audioCategories, videoCategories])
 
   useEffect(() => {
     if (mode !== 'edit') return
@@ -359,6 +374,7 @@ export function EntryFormPage() {
                 disabled={mediaTypeLocked}
                 className={mediaType === 'audio' ? 'is-active' : ''}
                 onClick={() => {
+                  mediaTypeTouchedRef.current = true
                   setMediaType('audio')
                   setVideoCategory('')
                 }}
@@ -370,6 +386,7 @@ export function EntryFormPage() {
                 disabled={mediaTypeLocked}
                 className={mediaType === 'video' ? 'is-active' : ''}
                 onClick={() => {
+                  mediaTypeTouchedRef.current = true
                   setMediaType('video')
                   setCategory('')
                 }}
@@ -393,12 +410,12 @@ export function EntryFormPage() {
               <span>Category</span>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                disabled={categoryDisabled}
+                onChange={(e) => {
+                  categoryTouchedRef.current = true
+                  setCategory(e.target.value)
+                }}
               >
-                {adminCategories === null && (
-                  <option value="">Drafts</option>
-                )}
+                <option value="">Drafts</option>
                 {availableCategories.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -410,18 +427,25 @@ export function EntryFormPage() {
                     <option value={category}>{category}</option>
                   )}
               </select>
+              {categories.length > 0 &&
+                adminCategories !== null &&
+                availableCategories.length === 0 && (
+                  <span className="admin-muted admin-field-hint">
+                    Your categories are video categories — switch the media type to Video.
+                  </span>
+                )}
             </label>
           ) : (
             <label className="admin-field">
               <span>Video category</span>
               <select
                 value={videoCategory}
-                onChange={(e) => setVideoCategory(e.target.value)}
-                disabled={categoryDisabled}
+                onChange={(e) => {
+                  categoryTouchedRef.current = true
+                  setVideoCategory(e.target.value)
+                }}
               >
-                {adminCategories === null && (
-                  <option value="">Drafts</option>
-                )}
+                <option value="">Drafts</option>
                 {availableCategories.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -433,6 +457,13 @@ export function EntryFormPage() {
                     <option value={videoCategory}>{videoCategory}</option>
                   )}
               </select>
+              {categories.length > 0 &&
+                adminCategories !== null &&
+                availableCategories.length === 0 && (
+                  <span className="admin-muted admin-field-hint">
+                    Your categories are audio categories — switch the media type to Audio.
+                  </span>
+                )}
             </label>
           )}
 
