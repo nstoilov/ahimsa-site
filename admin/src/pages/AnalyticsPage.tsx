@@ -44,7 +44,7 @@ const PIE_PALETTE = [
 ]
 
 const OTHER_COLOR = '#64748b'
-const TOP_N = 8
+const TOP_N = 5
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error'
 
@@ -87,7 +87,7 @@ function PieCard({
       {data.length === 0 || totalSeconds === 0 ? (
         <p className="admin-muted admin-analytics-empty">No watch time in this period.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={320}>
           <PieChart>
             <Pie
               data={data}
@@ -116,7 +116,7 @@ function PieCard({
             />
             <Legend
               verticalAlign="bottom"
-              height={40}
+              height={84}
               wrapperStyle={{ fontSize: '0.8rem', opacity: 0.85 }}
             />
           </PieChart>
