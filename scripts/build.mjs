@@ -10,6 +10,8 @@ const exclude = new Set([
   'node_modules',
   'dist',
   'admin',
+  'cms',
+  'blog',
   'scripts',
   '.git',
   '.wrangler',
@@ -20,6 +22,7 @@ const exclude = new Set([
   'package-lock.json',
   'CNAME',
   '_config.yml',
+  'BLOG.md',
 ])
 
 // 1. Wipe dist/ so output reflects the current source tree exactly.
