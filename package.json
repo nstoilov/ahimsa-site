@@ -3,10 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs && npm --prefix admin install && npm --prefix admin run build",
-    "deploy": "wrangler deploy"
+    "build": "node scripts/build.mjs && node scripts/build-blog.mjs && npm --prefix admin install && npm --prefix admin run build",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev",
+    "cms:dev": "npm --prefix cms run dev",
+    "cms:deploy": "npm --prefix cms run deploy"
   },
   "devDependencies": {
+    "@portabletext/to-html": "^6.0.0",
+    "@sanity/client": "^8.6.1",
+    "@sanity/image-url": "^2.1.1",
     "wrangler": "^4.0.0"
   }
 }

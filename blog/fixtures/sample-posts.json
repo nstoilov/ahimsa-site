@@ -1,0 +1,167 @@
+[
+  {
+    "id": "fixture.post-1",
+    "title": "Как да започнем с медитацията: 5 стъпки за начинаещи",
+    "slug": "kak-da-zapovchnem-s-meditatsiyata",
+    "excerpt": "Медитацията не изисква специална екипировка или часове практика. Ето как да направите първите стъпки спокойно и устойчиво.",
+    "coverImage": {
+      "asset": {"_ref": "image-fixture0001-1600x900-jpg"},
+      "alt": "Човек медитира спокойно на разсъмване",
+      "caption": "Първите минути на деня са най-подходящи за практика."
+    },
+    "coverAsset": {"_id": "image-fixture0001-1600x900-jpg"},
+    "publishedAt": "2026-09-01T08:00:00.000Z",
+    "_updatedAt": "2026-09-02T10:00:00.000Z",
+    "author": {"name": "Яна Христова", "picture": null},
+    "categories": [{"title": "Медитация"}, {"title": "Начинаещи"}],
+    "seoTitle": null,
+    "seoDescription": null,
+    "canonicalUrl": null,
+    "body": [
+      {
+        "_key": "b1",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "children": [
+          {"_key": "b1c1", "_type": "span", "text": "Ако сте си казали „искам да медитирам, но не знам откъде да започна“ — тази статия е за вас. ", "marks": []},
+          {"_key": "b1c2", "_type": "span", "text": "Няма нужда от перфектна поза или тишина в стаята", "marks": ["strong"]},
+          {"_key": "b1c3", "_type": "span", "text": ". Нужна е само малко любопитство и пет минути на ден.", "marks": []}
+        ]
+      },
+      {"_key": "h2-1", "_type": "block", "style": "h2", "markDefs": [], "children": [{"_key": "h2c1", "_type": "span", "text": "Стъпка 1: Изберете време и място", "marks": []}]},
+      {
+        "_key": "b2",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [
+          {"_key": "link1", "_type": "link", "href": "https://ahimsaapp.com"}
+        ],
+        "children": [
+          {"_key": "b2c1", "_type": "span", "text": "Най-лесният навигатор е рутината. Изберете момент, който се повтаря всеки ден — например след ставане. Може да разгледате и ", "marks": []},
+          {"_key": "b2c2", "_type": "span", "text": "приложението Ahimsa", "marks": ["link1"]},
+          {"_key": "b2c3", "_type": "span", "text": " за водени практики на български.", "marks": []}
+        ]
+      },
+      {"_key": "h2-2", "_type": "block", "style": "h2", "markDefs": [], "children": [{"_key": "h2c2", "_type": "span", "text": "Стъпка 2: Започнете с дъха", "marks": []}]},
+      {
+        "_key": "list1",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "listItem": "bullet",
+        "level": 1,
+        "children": [{"_key": "l1c1", "_type": "span", "text": "Седнете удобно и затворете очи.", "marks": []}]
+      },
+      {
+        "_key": "list2",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "listItem": "bullet",
+        "level": 1,
+        "children": [{"_key": "l2c1", "_type": "span", "text": "Вдишайте за четири, издишайте за шест.", "marks": []}]
+      },
+      {
+        "_key": "list3",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "listItem": "bullet",
+        "level": 1,
+        "children": [{"_key": "l3c1", "_type": "span", "text": "Когато умът се разсее, просто се върнете към броя. ", "marks": []}, {"_key": "l3c2", "_type": "span", "text": "Това е практиката.", "marks": ["em"]}]
+      },
+      {
+        "_key": "b3",
+        "_type": "block",
+        "style": "blockquote",
+        "markDefs": [],
+        "children": [{"_key": "b3c1", "_type": "span", "text": "Медитацията не е спиране на мислите, а отношението към тях.", "marks": []}]
+      },
+      {"_key": "h2-3", "_type": "block", "style": "h2", "markDefs": [], "children": [{"_key": "h2c3", "_type": "span", "text": "Бонус: проследявайте напредъка си", "marks": []}]},
+      {
+        "_key": "img1",
+        "_type": "image",
+        "asset": {"_ref": "image-fixture0002-1200x675-jpg"},
+        "alt": "Дневник за медитация с отбелязани дни",
+        "caption": "Два поредни дни са вече навик в изграждане."
+      },
+      {
+        "_key": "b4",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "children": [{"_key": "b4c1", "_type": "span", "text": "Отбелязвайте всяка практика в календар — дори само точка. Веригата от точки бързо се превръща в мотивация.", "marks": []}]
+      },
+      {
+        "_key": "code1",
+        "_type": "codeBlock",
+        "language": "plaintext",
+        "code": "вдишай 4 — задръж 2 — издишай 6\nповтори 10 пъти"
+      }
+    ]
+  },
+  {
+    "id": "fixture.post-2",
+    "title": "Дишането като инструмент срещу стреса",
+    "slug": "dishaneto-kato-instrument-sreshtu-stresa",
+    "excerpt": "Защо няколко бавни издишвания успокояват нервната система — и три техники, които работят за минути.",
+    "coverImage": {
+      "asset": {"_ref": "image-fixture0003-1600x900-jpg"},
+      "alt": "Спокойно езеро на разсъмване",
+      "caption": null
+    },
+    "coverAsset": {"_id": "image-fixture0003-1600x900-jpg"},
+    "publishedAt": "2026-09-05T08:00:00.000Z",
+    "_updatedAt": "2026-09-05T08:00:00.000Z",
+    "author": {"name": "Маря Иванова", "picture": null},
+    "categories": [{"title": "Дишане"}],
+    "seoTitle": null,
+    "seoDescription": null,
+    "canonicalUrl": null,
+    "body": [
+      {
+        "_key": "p1",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "children": [{"_key": "p1c1", "_type": "span", "text": "Дъхът е единственият регулатор на нервната система, до който имаме директен достъп. По-дългото издишване сигнализира на тялото, че е безопасно — и напрежението спада.", "marks": []}]
+      },
+      {"_key": "h2a", "_type": "block", "style": "h2", "markDefs": [], "children": [{"_key": "h2ac", "_type": "span", "text": "Три техники за всеки момент", "marks": []}]},
+      {
+        "_key": "n1",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "listItem": "number",
+        "level": 1,
+        "children": [{"_key": "n1c", "_type": "span", "text": "Квадратно дишане — за фокус пред важна задача.", "marks": []}]
+      },
+      {
+        "_key": "n2",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "listItem": "number",
+        "level": 1,
+        "children": [{"_key": "n2c", "_type": "span", "text": "Удължено издишване — за заспиване.", "marks": []}]
+      },
+      {
+        "_key": "n3",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "listItem": "number",
+        "level": 1,
+        "children": [{"_key": "n3c", "_type": "span", "text": "Дихателно сканиране — за отпускане на тялото.", "marks": []}]
+      },
+      {
+        "_key": "p2",
+        "_type": "block",
+        "style": "normal",
+        "markDefs": [],
+        "children": [{"_key": "p2c1", "_type": "span", "text": "Пробвайте ги с водена сесия в приложението — заедно с гласа е много по-лесно.", "marks": []}]
+      }
+    ]
+  }
+]

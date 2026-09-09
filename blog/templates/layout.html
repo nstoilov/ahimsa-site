@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <meta name="description" content="{{metaDescription}}">
+  <link rel="canonical" href="{{canonicalUrl}}">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/blog/blog.css">
+  <link rel="icon" type="image/png" href="/assets/hero.png">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="{{ogTitle}}">
+  <meta property="og:description" content="{{ogDescription}}">
+  <meta property="og:image" content="{{ogImage}}">
+  <meta property="og:url" content="{{ogUrl}}">
+  <meta property="og:type" content="{{ogType}}">
+  <meta property="og:site_name" content="Ahimsa">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ogTitle}}">
+  <meta name="twitter:description" content="{{ogDescription}}">
+  <meta name="twitter:image" content="{{ogImage}}">
+  {{publishedTimeMeta}}
+  {{extraHead}}
+  {{jsonLd}}
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">Λ H I M S Λ</a>
+      <a href="/#download" class="nav-cta">Свали сега</a>
+    </div>
+  </header>
+
+  <main>
+    {{mainContent}}
+  </main>
+
+  <footer>
+    <div class="container footer-grid">
+      <a href="/" class="footer-logo">Λ H I M S Λ</a>
+      <div class="footer-links">
+        <a href="/blog/" class="footer-link">Блог</a>
+        <a href="/support.html" class="footer-link">Поддръжка</a>
+        <a href="/policy.html" class="footer-link">Политика за поверителност</a>
+      </div>
+      <div class="copyright">
+        &copy; 2026 Ahimsa. Всички права запазени.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
