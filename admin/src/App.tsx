@@ -8,7 +8,7 @@ import { EntryFormPage } from './pages/EntryFormPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import './App.css'
-// h
+// hd
 function AppRoutes() {
   const { isPasswordRecovery } = useAuth()
 
