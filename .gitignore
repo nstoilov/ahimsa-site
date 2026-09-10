@@ -13,6 +13,7 @@ node_modules/
 
 # local-only docs & manual migrations
 BLOG.md
+SEO.md
 admin/*.md
 admin/supabase/*.sql
 admin/supabase/.temp/

@@ -23,6 +23,7 @@ const exclude = new Set([
   'CNAME',
   '_config.yml',
   'BLOG.md',
+  'SEO.md',
 ])
 
 // 1. Wipe dist/ so output reflects the current source tree exactly.
