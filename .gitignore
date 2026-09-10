@@ -16,3 +16,6 @@ BLOG.md
 admin/*.md
 admin/supabase/*.sql
 admin/supabase/.temp/
+
+# macOS
+.DS_Store

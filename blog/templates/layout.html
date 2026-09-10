@@ -8,19 +8,27 @@
   <link rel="canonical" href="{{canonicalUrl}}">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/blog/blog.css">
-  <link rel="icon" type="image/png" href="/assets/hero.png">
+  <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="64x64">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap">
   <meta property="og:locale" content="bg_BG">
+  <meta property="og:site_name" content="Ahimsa">
   <meta property="og:title" content="{{ogTitle}}">
   <meta property="og:description" content="{{ogDescription}}">
   <meta property="og:image" content="{{ogImage}}">
+  <meta property="og:image:width" content="{{ogImageWidth}}">
+  <meta property="og:image:height" content="{{ogImageHeight}}">
+  <meta property="og:image:alt" content="{{ogImageAlt}}">
   <meta property="og:url" content="{{ogUrl}}">
   <meta property="og:type" content="{{ogType}}">
-  <meta property="og:site_name" content="Ahimsa">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ogTitle}}">
   <meta name="twitter:description" content="{{ogDescription}}">
   <meta name="twitter:image" content="{{ogImage}}">
   {{publishedTimeMeta}}
+  {{articleSection}}
   {{extraHead}}
   {{jsonLd}}
 </head>
@@ -42,8 +50,8 @@
       <a href="/" class="footer-logo">Λ H I M S Λ</a>
       <div class="footer-links">
         <a href="/blog/" class="footer-link">Блог</a>
-        <a href="/support.html" class="footer-link">Поддръжка</a>
-        <a href="/policy.html" class="footer-link">Политика за поверителност</a>
+        <a href="/support" class="footer-link">Поддръжка</a>
+        <a href="/policy" class="footer-link">Политика за поверителност</a>
       </div>
       <div class="copyright">
         &copy; 2026 Ahimsa. Всички права запазени.

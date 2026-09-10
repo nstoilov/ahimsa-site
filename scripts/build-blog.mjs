@@ -241,6 +241,19 @@ function categoryChips(categories) {
   return `<div class="blog-chips">${chips}</div>`
 }
 
+const OG_IMAGE_WIDTH = 1200
+
+function ogImageDims(coverImage) {
+  const ref = coverImage?.asset?._ref || ''
+  const match = ref.match(/-(\d+)x(\d+)-[a-z]+$/i)
+  if (!match) return {width: '', height: ''}
+  const [, w, h] = match.map(Number)
+  return {
+    width: String(OG_IMAGE_WIDTH),
+    height: String(Math.round((h * OG_IMAGE_WIDTH) / w)),
+  }
+}
+
 function postCard(post) {
   const href = `/blog/${post.slug}/`
   const meta = [
@@ -274,9 +287,13 @@ function buildIndexPage(templates, posts) {
     canonicalUrl: `${SITE_URL}/blog/`,
     ogTitle: 'Ahimsa Блог',
     ogDescription: description,
-    ogImage: `${SITE_URL}/assets/hero.png`,
+    ogImage: `${SITE_URL}/assets/og-image.jpg`,
+    ogImageWidth: '1200',
+    ogImageHeight: '654',
+    ogImageAlt: 'Блогът на Ahimsa — статии за медитация и осъзнат живот',
     ogUrl: `${SITE_URL}/blog/`,
     ogType: 'website',
+    articleSection: '',
     publishedTimeMeta: '',
     extraHead: `<link rel="alternate" type="application/rss+xml" title="Ahimsa Блог" href="/blog/rss.xml">`,
     jsonLd: jsonLdScript({
@@ -296,6 +313,7 @@ function buildArticlePage(templates, post, newer, older) {
   const title = post.seoTitle || `${post.title} | Ahimsa`
   const description = post.seoDescription || post.excerpt
   const coverUrl = imageUrl(post.coverImage, 1200)
+  const ogDims = ogImageDims(post.coverImage)
 
   let bodyHtml
   try {
@@ -343,8 +361,14 @@ function buildArticlePage(templates, post, newer, older) {
     ogTitle: escapeHtml(title),
     ogDescription: escapeHtml(description),
     ogImage: coverUrl,
+    ogImageWidth: ogDims.width,
+    ogImageHeight: ogDims.height,
+    ogImageAlt: escapeHtml(post.coverImage.alt || ''),
     ogUrl: canonical,
     ogType: 'article',
+    articleSection: post.categories?.length
+      ? `<meta property="article:section" content="${escapeHtml(post.categories[0].title)}">`
+      : '',
     publishedTimeMeta: `<meta property="article:published_time" content="${escapeHtml(post.publishedAt)}">`,
     extraHead: '',
     jsonLd:
@@ -404,10 +428,8 @@ ${items.join('\n')}
 }
 
 function buildSitemap(posts) {
-  const staticPages = ['/', '/support.html', '/policy.html', '/policy-chap.html', '/blog/']
-  const urls = staticPages.map(
-    (path) => `  <url><loc>${SITE_URL}${path === '/' ? '/' : path}</loc></url>`,
-  )
+  const staticPages = ['/', '/support', '/policy', '/policy-chap', '/blog/']
+  const urls = staticPages.map((path) => `  <url><loc>${SITE_URL}${path}</loc></url>`)
   for (const post of posts) {
     const lastmod = String(post._updatedAt || post.publishedAt).slice(0, 10)
     urls.push(`  <url><loc>${SITE_URL}/blog/${post.slug}/</loc><lastmod>${lastmod}</lastmod></url>`)
