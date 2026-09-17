@@ -155,4 +155,4 @@ requires `publishedAt <= now()`, so a future date schedules a post.
 - Studio: `sanity build` (config/schema compile), `sanity deploy` to
   https://ahimsa-blog.sanity.studio, structure verified after the
   `documentTypeListItem` fix.
-testd
+test
