@@ -95,6 +95,20 @@ export async function fetchCategories(): Promise<string[]> {
   return (data as { name: string }[]).map((r) => r.name)
 }
 
+export type CategoryOption = {
+  id: number
+  name: string
+}
+
+export async function fetchCategoryOptions(): Promise<CategoryOption[]> {
+  const { data, error } = await supabase
+    .from('category_order')
+    .select('id, name')
+    .order('display_order', { ascending: true })
+  if (error) throw error
+  return (data as CategoryOption[]) ?? []
+}
+
 export type CategoryOrder = {
   name: string
   display_order: number
