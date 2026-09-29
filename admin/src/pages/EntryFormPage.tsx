@@ -18,6 +18,7 @@ import {
 } from '../lib/entries'
 import { getAudioUrl, getImageUrl, getVideoUrl, prefixedR2Key } from '../lib/media'
 import { deleteR2Objects, presignAndUpload } from '../lib/r2upload'
+import { clearEntryDraft, getEntryDraft, saveEntryDraft } from '../lib/entryDraft'
 
 type Mode = 'create' | 'edit'
 
@@ -27,26 +28,27 @@ export function EntryFormPage() {
   const { adminCategories, isFullAdmin, user } = useAuth()
   const mode: Mode = id ? 'edit' : 'create'
   const entryId = id ? Number(id) : NaN
+  const draft = mode === 'create' ? getEntryDraft() : null
 
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [category, setCategory] = useState('')
-  const [videoCategory, setVideoCategory] = useState('')
-  const [free, setFree] = useState(false)
+  const [title, setTitle] = useState(draft?.title ?? '')
+  const [author, setAuthor] = useState(draft?.author ?? '')
+  const [category, setCategory] = useState(draft?.category ?? '')
+  const [videoCategory, setVideoCategory] = useState(draft?.videoCategory ?? '')
+  const [free, setFree] = useState(draft?.free ?? false)
   const [categories, setCategories] = useState<CategoryOrder[]>([])
   const [originalCategory, setOriginalCategory] = useState<string | null>(null)
   const [originalVideoCategory, setOriginalVideoCategory] = useState<string | null>(null)
   const [originalNumber, setOriginalNumber] = useState<number | null>(null)
 
-  const [mediaType, setMediaType] = useState<MediaType>('audio')
+  const [mediaType, setMediaType] = useState<MediaType>(draft?.mediaType ?? 'audio')
   const mediaTypeLocked = mode === 'edit'
 
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [audioFile, setAudioFile] = useState<File | null>(null)
-  const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [audioPreview, setAudioPreview] = useState<string | null>(null)
-  const [videoPreview, setVideoPreview] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(draft?.imageFile ?? null)
+  const [audioFile, setAudioFile] = useState<File | null>(draft?.audioFile ?? null)
+  const [videoFile, setVideoFile] = useState<File | null>(draft?.videoFile ?? null)
+  const [imagePreview, setImagePreview] = useState<string | null>(draft?.imagePreview ?? null)
+  const [audioPreview, setAudioPreview] = useState<string | null>(draft?.audioPreview ?? null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(draft?.videoPreview ?? null)
   const [existingImagePath, setExistingImagePath] = useState<string | null>(null)
   const [existingAudioPath, setExistingAudioPath] = useState<string | null>(null)
   const [existingVideoPath, setExistingVideoPath] = useState<string | null>(null)
@@ -63,8 +65,42 @@ export function EntryFormPage() {
   const audioInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const mediaTypeTouchedRef = useRef(false)
-  const categoryTouchedRef = useRef(false)
+  const mediaTypeTouchedRef = useRef(draft?.mediaTypeTouched ?? false)
+  const categoryTouchedRef = useRef(draft?.categoryTouched ?? false)
+
+  useEffect(() => {
+    if (mode !== 'create') return
+    saveEntryDraft({
+      title,
+      author,
+      category,
+      videoCategory,
+      free,
+      mediaType,
+      mediaTypeTouched: mediaTypeTouchedRef.current,
+      categoryTouched: categoryTouchedRef.current,
+      imageFile,
+      audioFile,
+      videoFile,
+      imagePreview,
+      audioPreview,
+      videoPreview,
+    })
+  }, [
+    mode,
+    title,
+    author,
+    category,
+    videoCategory,
+    free,
+    mediaType,
+    imageFile,
+    audioFile,
+    videoFile,
+    imagePreview,
+    audioPreview,
+    videoPreview,
+  ])
 
   useEffect(() => {
     fetchCategoryOrder()
@@ -308,6 +344,7 @@ export function EntryFormPage() {
 
       if (mode === 'create') {
         await createEntry(input, user?.email ?? null)
+        clearEntryDraft()
       } else {
         await updateEntry(entryId, input)
       }
@@ -421,11 +458,9 @@ export function EntryFormPage() {
                     {c}
                   </option>
                 ))}
-                {mode === 'edit' &&
-                  category &&
-                  !availableCategories.includes(category) && (
-                    <option value={category}>{category}</option>
-                  )}
+                {category && !availableCategories.includes(category) && (
+                  <option value={category}>{category}</option>
+                )}
               </select>
               {categories.length > 0 &&
                 adminCategories !== null &&
@@ -451,11 +486,9 @@ export function EntryFormPage() {
                     {c}
                   </option>
                 ))}
-                {mode === 'edit' &&
-                  videoCategory &&
-                  !availableCategories.includes(videoCategory) && (
-                    <option value={videoCategory}>{videoCategory}</option>
-                  )}
+                {videoCategory && !availableCategories.includes(videoCategory) && (
+                  <option value={videoCategory}>{videoCategory}</option>
+                )}
               </select>
               {categories.length > 0 &&
                 adminCategories !== null &&
