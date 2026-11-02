@@ -6,7 +6,12 @@ import {
   type BannerAction,
   type BannerConfigInput,
 } from '../lib/banner'
-import { fetchCategoryOptions, type CategoryOption } from '../lib/entries'
+import {
+  fetchCategoryOptions,
+  fetchEntryOptions,
+  type CategoryOption,
+  type EntryOption,
+} from '../lib/entries'
 import { getImageUrl } from '../lib/media'
 import { presignAndUpload } from '../lib/r2upload'
 
@@ -84,6 +89,7 @@ type BannerSectionProps = {
   fallbackAction: BannerAction
   defaultEnabled: boolean
   categories: CategoryOption[]
+  entries: EntryOption[]
 }
 
 function BannerSection({
@@ -91,6 +97,7 @@ function BannerSection({
   heading,
   description,
   categories,
+  entries,
   allowedActions,
   fallbackAction,
   defaultEnabled,
@@ -110,6 +117,7 @@ function BannerSection({
   const [textColor, setTextColor] = useState('')
   const [action, setAction] = useState<BannerAction>(fallbackAction)
   const [actionLink, setActionLink] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
 
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -129,19 +137,42 @@ function BannerSection({
 
   const paywallAllowed = allowedActions.includes('paywall')
 
-  const selectedCategoryId = (() => {
+  const linkCategoryId = (() => {
     const trimmed = actionLink.trim()
     const match = categories.find((c) => trimmed === `/category-entries?id=${c.id}`)
     return match ? String(match.id) : ''
   })()
+  const categorySelectValue = categoryFilter || linkCategoryId
 
   function onPickCategory(value: string) {
+    setCategoryFilter(value)
     if (!value) {
       setActionLink('')
       return
     }
     setActionLink(`/category-entries?id=${value}`)
   }
+
+  const selectedEntryId = (() => {
+    const trimmed = actionLink.trim()
+    const match = entries.find((e) => trimmed === `/player?id=${e.id}`)
+    return match ? String(match.id) : ''
+  })()
+
+  function onPickEntry(value: string) {
+    if (!value) {
+      setActionLink('')
+      return
+    }
+    setActionLink(`/player?id=${value}`)
+  }
+
+  const filteredEntries = (() => {
+    if (!categorySelectValue) return entries
+    const cat = categories.find((c) => String(c.id) === categorySelectValue)
+    if (!cat) return entries
+    return entries.filter((e) => e.category === cat.name || e.video_category === cat.name)
+  })()
 
   useEffect(() => {
     let cancelled = false
@@ -685,7 +716,7 @@ function BannerSection({
                 <label className="admin-field">
                   <span>Category</span>
                   <select
-                    value={selectedCategoryId}
+                    value={categorySelectValue}
                     onChange={(e) => onPickCategory(e.target.value)}
                     disabled={categories.length === 0}
                   >
@@ -697,9 +728,33 @@ function BannerSection({
                     ))}
                   </select>
                   <span className="admin-muted admin-field-hint">
-                    Pick a category to fill the link automatically, or leave on Custom and enter
-                    any route below.
+                    Fill the link with this category's page and filter the entries below, or leave
+                    on Custom and enter any route below.
                   </span>
+                </label>
+                <label className="admin-field">
+                  <span>Entry</span>
+                  <select
+                    value={selectedEntryId}
+                    onChange={(e) => onPickEntry(e.target.value)}
+                    disabled={entries.length === 0}
+                  >
+                    <option value="">Custom / none</option>
+                    {filteredEntries.map((e) => (
+                      <option key={e.id} value={String(e.id)}>
+                        {e.title}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="admin-muted admin-field-hint">
+                    Pick an entry to link straight to its player screen. Filtered by the category
+                    above when one is selected.
+                  </span>
+                  {categorySelectValue && filteredEntries.length === 0 && (
+                    <span className="admin-field-hint admin-hint-warning">
+                      No entries in this category.
+                    </span>
+                  )}
                 </label>
                 <label className="admin-field">
                   <span>Action link *</span>
@@ -766,6 +821,7 @@ function BannerSection({
 
 export function BannerPage() {
   const [categories, setCategories] = useState<CategoryOption[]>([])
+  const [entries, setEntries] = useState<EntryOption[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -774,6 +830,11 @@ export function BannerPage() {
         if (!cancelled) setCategories(options)
       })
       .catch((e) => console.error('Failed to load categories for banner links:', e))
+    fetchEntryOptions()
+      .then((options) => {
+        if (!cancelled) setEntries(options)
+      })
+      .catch((e) => console.error('Failed to load entries for banner links:', e))
     return () => {
       cancelled = true
     }
@@ -800,6 +861,7 @@ export function BannerPage() {
           fallbackAction="paywall"
           defaultEnabled
           categories={categories}
+          entries={entries}
         />
 
         <BannerSection
@@ -810,6 +872,7 @@ export function BannerPage() {
           fallbackAction="none"
           defaultEnabled={false}
           categories={categories}
+          entries={entries}
         />
       </main>
     </div>

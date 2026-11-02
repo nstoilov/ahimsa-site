@@ -100,6 +100,22 @@ export type CategoryOption = {
   name: string
 }
 
+export type EntryOption = {
+  id: number
+  title: string
+  category: string | null
+  video_category: string | null
+}
+
+export async function fetchEntryOptions(): Promise<EntryOption[]> {
+  const { data, error } = await supabase
+    .from('entries')
+    .select('id, title, category, video_category')
+    .order('title', { ascending: true })
+  if (error) throw error
+  return (data as EntryOption[]) ?? []
+}
+
 export async function fetchCategoryOptions(): Promise<CategoryOption[]> {
   const { data, error } = await supabase
     .from('category_order')
