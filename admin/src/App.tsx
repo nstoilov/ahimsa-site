@@ -7,6 +7,7 @@ import { EntriesPage } from './pages/EntriesPage'
 import { EntryFormPage } from './pages/EntryFormPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { BannerPage } from './pages/BannerPage'
+import { GrantedAccessPage } from './pages/GrantedAccessPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import './App.css'
 // h
@@ -63,6 +64,14 @@ function AppRoutes() {
         element={
           <RequireAuth requireAdmin requireFullAdmin>
             <BannerPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/granted-access"
+        element={
+          <RequireAuth requireAdmin requireFullAdmin>
+            <GrantedAccessPage />
           </RequireAuth>
         }
       />

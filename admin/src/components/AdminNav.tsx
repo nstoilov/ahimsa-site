@@ -13,6 +13,7 @@ export function AdminNav() {
         {isAdmin && <Link to="/analytics">Analytics</Link>}
         {isFullAdmin && <Link to="/categories">Categories</Link>}
         {isFullAdmin && <Link to="/banner">Banner</Link>}
+        {isFullAdmin && <Link to="/granted-access">Granted Access</Link>}
       </nav>
       <div className="admin-account">
         <span className="admin-user">{user?.email}</span>
