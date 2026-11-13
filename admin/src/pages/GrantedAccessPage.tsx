@@ -18,7 +18,7 @@ function todayString(): string {
   const day = String(now.getDate()).padStart(2, '0')
   return `${now.getFullYear()}-${month}-${day}`
 }
-
+// pub
 function isValidDate(value: string): boolean {
   if (!DATE_RE.test(value)) return false
   const parsed = new Date(`${value}T00:00:00`)
