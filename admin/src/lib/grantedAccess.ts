@@ -9,7 +9,7 @@ import { supabase } from './supabase'
 // access_type = 'categories'  => only entries whose category is listed in
 //                                categories are unlocked.
 // Emails are stored lowercase (normalized on write; RLS compares
-// case-insensitively as a safety net)..
+// case-insensitively as a safety net).
 
 export type AccessType = 'all' | 'categories'
 
