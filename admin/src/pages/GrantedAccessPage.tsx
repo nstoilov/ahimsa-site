@@ -6,6 +6,8 @@ import {
   fetchGrantedAccess,
   saveGrantedAccess,
   deleteGrantedAccess,
+  FULL_ACCESS,
+  type AccessScope,
   type GrantedAccess,
 } from '../lib/grantedAccess'
 
@@ -19,10 +21,15 @@ function todayString(): string {
   return `${now.getFullYear()}-${month}-${day}`
 }
 // pub
+// Timezone-safe: no Date round-trip — parsing "YYYY-MM-DDT00:00:00" locally
+// and calling toISOString() shifts the date back a day in UTC+ timezones,
+// which made every valid date fail validation.
 function isValidDate(value: string): boolean {
   if (!DATE_RE.test(value)) return false
-  const parsed = new Date(`${value}T00:00:00`)
-  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+  const [year, month, day] = value.split('-').map(Number)
+  if (month < 1 || month > 12 || day < 1) return false
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  return day <= daysInMonth
 }
 
 function addMonthsISO(baseISO: string, months: number): string {
@@ -41,19 +48,20 @@ const DURATION_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1).map((months
   label: months === 12 ? '1 year' : `${months} ${months === 1 ? 'month' : 'months'}`,
 }))
 
-// Selecting every category is stored as null ("all"), which keeps future
-// categories covered and behaves exactly like a subscription. When no
-// categories can be loaded we fail safe to full access (the picker shows a
-// warning so this never happens silently).
-function scopeForSave(selected: Set<string>, categoryNames: string[]): string[] | null {
-  if (categoryNames.length === 0) return null
-  if (selected.size >= categoryNames.length) return null
-  return Array.from(selected)
+// "Пълен достъп" is stored as access_type = 'all' (explicit full-access
+// grant, categories = null), which keeps future categories covered and
+// behaves exactly like a subscription. Selecting every category individually
+// is equivalent. When no categories can be loaded we fail safe to full
+// access (the picker shows a warning so this never happens silently).
+function scopeForSave(selected: Set<string>, categoryNames: string[], allAccess: boolean): AccessScope {
+  if (allAccess || categoryNames.length === 0) return FULL_ACCESS
+  if (selected.size >= categoryNames.length) return FULL_ACCESS
+  return { access_type: 'categories', categories: Array.from(selected) }
 }
 
-function scopeLabel(categories: string[] | null): string {
-  if (categories === null) return 'all categories'
-  const n = categories.length
+function scopeLabel(scope: GrantedAccess | AccessScope): string {
+  if (scope.access_type === 'all') return 'all categories'
+  const n = scope.categories?.length ?? 0
   return `${n} ${n === 1 ? 'category' : 'categories'}`
 }
 
@@ -61,14 +69,21 @@ function CategoryScopePicker({
   categoryNames,
   selected,
   onChange,
+  allAccess,
+  onAllAccessChange,
+  invalid = false,
 }: {
   categoryNames: string[]
   selected: Set<string>
   onChange: (next: Set<string>) => void
+  allAccess: boolean
+  onAllAccessChange: (v: boolean) => void
+  invalid?: boolean
 }) {
+  const [showList, setShowList] = useState(false)
   const allSelected = categoryNames.length > 0 && selected.size >= categoryNames.length
   return (
-    <div className="admin-category-scope">
+    <div className={`admin-category-scope${invalid ? ' admin-flash' : ''}`}>
       <div className="admin-category-scope-head">
         <span className="admin-category-scope-title">Category access</span>
         <div className="admin-category-scope-actions">
@@ -76,13 +91,42 @@ function CategoryScopePicker({
             type="button"
             className="admin-link-button"
             onClick={() => onChange(new Set(categoryNames))}
+            disabled={allAccess || !showList}
           >
             Select all
           </button>
-          <button type="button" className="admin-link-button" onClick={() => onChange(new Set())}>
+          <button
+            type="button"
+            className="admin-link-button"
+            onClick={() => onChange(new Set())}
+            disabled={allAccess || !showList}
+          >
             Deselect all
           </button>
         </div>
+      </div>
+      <div className="admin-category-scope-controls">
+        <label className="admin-check admin-category-scope-all" title="Достъп до всичко">
+          <input
+            type="checkbox"
+            checked={allAccess}
+            onChange={(e) => onAllAccessChange(e.target.checked)}
+          />
+          <span>Пълен достъп</span>
+          <span className="admin-muted admin-category-scope-all-hint">
+            — unlocks everything, same as a subscription
+          </span>
+        </label>
+        <button
+          type="button"
+          className={`admin-button admin-button-sm admin-category-scope-toggle${showList ? ' admin-category-scope-toggle-active' : ''}`}
+          onClick={() => setShowList((v) => !v)}
+          disabled={allAccess}
+          aria-expanded={showList}
+        >
+          {showList ? 'Hide categories' : 'Select categories'}
+          {showList ? '' : selected.size > 0 ? ` (${selected.size})` : ''}
+        </button>
       </div>
       {categoryNames.length === 0 ? (
         <p className="admin-muted admin-category-scope-hint">
@@ -90,29 +134,46 @@ function CategoryScopePicker({
         </p>
       ) : (
         <>
-          <div className="admin-category-scope-grid">
-            {categoryNames.map((name) => (
-              <label key={name} className="admin-check admin-category-scope-item">
-                <input
-                  type="checkbox"
-                  checked={selected.has(name)}
-                  onChange={(e) => {
-                    const next = new Set(selected)
-                    if (e.target.checked) next.add(name)
-                    else next.delete(name)
-                    onChange(next)
-                  }}
-                />
-                <span>{name}</span>
-              </label>
-            ))}
-          </div>
+          {showList && (
+            <div
+              className={`admin-category-scope-grid${allAccess ? ' admin-category-scope-grid-disabled' : ''}`}
+            >
+              {categoryNames.map((name) => (
+                <label
+                  key={name}
+                  className="admin-check admin-category-scope-item"
+                  title={name}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={allAccess}
+                    checked={selected.has(name)}
+                    onChange={(e) => {
+                      const next = new Set(selected)
+                      if (e.target.checked) next.add(name)
+                      else next.delete(name)
+                      onChange(next)
+                    }}
+                  />
+                  <span>{name}</span>
+                </label>
+              ))}
+            </div>
+          )}
           <p className="admin-muted admin-category-scope-hint">
-            {allSelected
-              ? 'All categories selected — full subscriber access, same as a subscription.'
-              : selected.size === 0
-                ? 'Select at least one category (or all) to grant access.'
-                : 'Only the selected categories are unlocked; everything else stays locked.'}
+            {allAccess
+              ? 'Пълен достъп — всичко е отключено, като абонамент.'
+              : categoryNames.length === 0
+                ? ''
+                : showList
+                  ? allSelected
+                    ? 'All categories selected — full subscriber access, same as a subscription.'
+                    : selected.size === 0
+                      ? 'Select at least one category (or all) to grant access.'
+                      : 'Only the selected categories are unlocked; everything else stays locked.'
+                  : selected.size > 0
+                    ? `${selected.size} ${selected.size === 1 ? 'category' : 'categories'} selected.`
+                    : 'No categories selected yet — pick "Пълен достъп" or select categories.'}
           </p>
         </>
       )}
@@ -126,25 +187,28 @@ export function GrantedAccessPage() {
   const [categoryNames, setCategoryNames] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<{ kind: 'success' | 'warning'; message: string } | null>(
-    null,
-  )
+  const [notice, setNotice] = useState<{
+    kind: 'success' | 'warning' | 'error'
+    message: string
+  } | null>(null)
   const [newEmail, setNewEmail] = useState('')
   const [newDate, setNewDate] = useState('')
   const [newDuration, setNewDuration] = useState('')
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  // null = not initialized yet -> defaults to "all categories" once loaded
-  const [newSelected, setNewSelected] = useState<Set<string> | null>(null)
+  const [newSelected, setNewSelected] = useState<Set<string>>(new Set())
+  const [newAllAccess, setNewAllAccess] = useState(false)
   const [granting, setGranting] = useState(false)
   const [editing, setEditing] = useState<GrantedAccess | null>(null)
   const [editDate, setEditDate] = useState('')
   const [editSelected, setEditSelected] = useState<Set<string>>(new Set())
+  const [editAllAccess, setEditAllAccess] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
   const [removing, setRemoving] = useState<GrantedAccess | null>(null)
   const [removingBusy, setRemovingBusy] = useState(false)
+  const [flash, setFlash] = useState<{ email: boolean; duration: boolean; scope: boolean } | null>(
+    null,
+  )
   const datePickerRef = useRef<HTMLInputElement>(null)
-
-  const newSelection = newSelected ?? new Set(categoryNames)
+  const flashTimer = useRef<number | null>(null)
 
   useEffect(() => {
     if (!notice) return
@@ -153,8 +217,24 @@ export function GrantedAccessPage() {
   }, [notice])
 
   useEffect(() => {
-    if (showDatePicker) datePickerRef.current?.showPicker?.()
-  }, [showDatePicker])
+    return () => {
+      if (flashTimer.current !== null) window.clearTimeout(flashTimer.current)
+    }
+  }, [])
+
+  // Remove and re-apply the flash class across frames so the CSS animation
+  // retriggers even on rapid repeated clicks.
+  function triggerFlash(targets: { email: boolean; duration: boolean; scope: boolean }) {
+    if (flashTimer.current !== null) window.clearTimeout(flashTimer.current)
+    setFlash(null)
+    window.requestAnimationFrame(() => {
+      setFlash(targets)
+      flashTimer.current = window.setTimeout(() => {
+        setFlash(null)
+        flashTimer.current = null
+      }, 1000)
+    })
+  }
 
   async function load() {
     setLoading(true)
@@ -163,7 +243,6 @@ export function GrantedAccessPage() {
       const [grants, cats] = await Promise.all([fetchGrantedAccess(), fetchCategories()])
       setRows(grants)
       setCategoryNames(cats)
-      setNewSelected((prev) => prev ?? new Set(cats))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load granted access.')
     } finally {
@@ -179,33 +258,48 @@ export function GrantedAccessPage() {
   const maxDate = addMonthsISO(today, 12)
   const newEmailValid = EMAIL_RE.test(newEmail.trim())
   const newDateValid = isValidDate(newDate) && newDate >= today && newDate <= maxDate
-  const newScopeValid = categoryNames.length === 0 || newSelection.size > 0
+  const newScopeValid = newAllAccess || categoryNames.length === 0 || newSelected.size > 0
+  const canGrant = newEmailValid && newDateValid && newScopeValid
 
   async function handleGrant(e: React.FormEvent) {
     e.preventDefault()
     const email = newEmail.trim()
-    if (!EMAIL_RE.test(email) || !newDateValid || !newScopeValid) return
+    if (granting) return
+    if (!canGrant) {
+      triggerFlash({
+        email: !newEmailValid,
+        duration: !newDateValid,
+        scope: !newScopeValid,
+      })
+      return
+    }
     setGranting(true)
     setError(null)
+    setNotice(null)
     try {
       const saved = await saveGrantedAccess(
         email,
         newDate,
-        scopeForSave(newSelection, categoryNames),
+        scopeForSave(newSelected, categoryNames, newAllAccess),
         user?.email ?? '',
       )
+      // The upsert returned the persisted row — the grant is confirmed saved.
+      if (!saved?.email) throw new Error('Grant was not saved — no row was returned.')
       setNotice({
         kind: 'success',
-        message: `Granted ${saved.email} access to ${scopeLabel(saved.categories)} until ${saved.expires_at}.`,
+        message: `Granted ${saved.email} access to ${scopeLabel(saved)} until ${saved.expires_at}.`,
       })
       setNewEmail('')
       setNewDate('')
       setNewDuration('')
-      setShowDatePicker(false)
-      setNewSelected(null)
+      setNewSelected(new Set())
+      setNewAllAccess(false)
       await load()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to grant access.')
+      setNotice({
+        kind: 'error',
+        message: `Could not grant access to ${email}: ${err instanceof Error ? err.message : 'unknown error.'}`,
+      })
     } finally {
       setGranting(false)
     }
@@ -216,27 +310,33 @@ export function GrantedAccessPage() {
     if (!Number.isInteger(months) || months < 1) return
     setNewDuration(e.target.value)
     setNewDate(addMonthsISO(todayString(), months))
-    setShowDatePicker(false)
   }
 
-  function toggleDatePicker() {
-    setShowDatePicker((open) => !open)
+  function openDatePicker() {
+    // The date input stays visually hidden (showPicker needs it rendered);
+    // opening the native picker directly avoids a second visible field.
+    try {
+      datePickerRef.current?.showPicker?.()
+    } catch {
+      // Browser blocked the picker (e.g. missing user activation) — ignore.
+    }
   }
 
   function startEdit(row: GrantedAccess) {
     setEditing(row)
     setEditDate(row.expires_at)
     // Scoped grants keep only categories that still exist; "all" grants
-    // prefill with the full list.
+    // prefill with the toggle on.
+    setEditAllAccess(row.access_type === 'all')
     setEditSelected(
-      row.categories === null
+      row.access_type === 'all'
         ? new Set(categoryNames)
-        : new Set(row.categories.filter((c) => categoryNames.includes(c))),
+        : new Set((row.categories ?? []).filter((c) => categoryNames.includes(c))),
     )
     setError(null)
   }
 
-  const editScopeValid = categoryNames.length === 0 || editSelected.size > 0
+  const editScopeValid = editAllAccess || categoryNames.length === 0 || editSelected.size > 0
 
   async function confirmEdit() {
     if (!editing || !isValidDate(editDate) || !editScopeValid) return
@@ -246,12 +346,12 @@ export function GrantedAccessPage() {
       const saved = await saveGrantedAccess(
         editing.email,
         editDate,
-        scopeForSave(editSelected, categoryNames),
+        scopeForSave(editSelected, categoryNames, editAllAccess),
         user?.email ?? '',
       )
       setNotice({
         kind: 'success',
-        message: `Updated ${saved.email}: ${scopeLabel(saved.categories)} until ${saved.expires_at}.`,
+        message: `Updated ${saved.email}: ${scopeLabel(saved)} until ${saved.expires_at}.`,
       })
       setEditing(null)
       await load()
@@ -290,6 +390,7 @@ export function GrantedAccessPage() {
           <div className="admin-grant-row">
             <input
               type="email"
+              className={flash?.email ? 'admin-flash' : undefined}
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder="user@example.com"
@@ -297,6 +398,7 @@ export function GrantedAccessPage() {
             />
             <div className="admin-expiry-picker">
               <select
+                className={flash?.duration ? 'admin-flash' : undefined}
                 value={newDuration}
                 onChange={handleDurationChange}
                 title="Access duration from today"
@@ -306,7 +408,7 @@ export function GrantedAccessPage() {
                 </option>
                 {newDuration === 'custom' && (
                   <option value="custom" disabled>
-                    {newDate ? `Custom date (${newDate})` : 'Custom date'}
+                    {newDate}
                   </option>
                 )}
                 {DURATION_OPTIONS.map((option) => (
@@ -317,11 +419,10 @@ export function GrantedAccessPage() {
               </select>
               <button
                 type="button"
-                className={`admin-calendar-toggle${showDatePicker ? ' admin-calendar-toggle-active' : ''}`}
-                onClick={toggleDatePicker}
+                className="admin-calendar-toggle"
+                onClick={openDatePicker}
                 title="Pick a specific date (up to 1 year from today)"
                 aria-label="Pick a specific expiry date"
-                aria-expanded={showDatePicker}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -341,33 +442,38 @@ export function GrantedAccessPage() {
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </button>
-              {showDatePicker && (
-                <input
-                  ref={datePickerRef}
-                  type="date"
-                  value={newDate}
-                  min={today}
-                  max={maxDate}
-                  onChange={(e) => {
-                    setNewDate(e.target.value)
-                    setNewDuration('custom')
-                  }}
-                  title="Access expires at the end of this day"
-                />
-              )}
+              <input
+                ref={datePickerRef}
+                type="date"
+                className="admin-date-input-hidden"
+                value={newDate}
+                min={today}
+                max={maxDate}
+                onChange={(e) => {
+                  setNewDate(e.target.value)
+                  setNewDuration('custom')
+                }}
+                tabIndex={-1}
+                aria-hidden="true"
+                title="Access expires at the end of this day"
+              />
             </div>
             <button
               type="submit"
-              className="admin-button admin-button-sm"
-              disabled={granting || !newEmailValid || !newDateValid || !newScopeValid}
+              className={`admin-button admin-button-sm admin-grant-submit${canGrant ? '' : ' admin-grant-submit-inactive'}`}
+              disabled={granting}
+              aria-busy={granting}
             >
-              {granting ? 'Granting…' : 'Grant access'}
+              {granting ? <span className="admin-spinner" aria-hidden="true" /> : 'Grant access'}
             </button>
           </div>
           <CategoryScopePicker
             categoryNames={categoryNames}
-            selected={newSelection}
+            selected={newSelected}
             onChange={setNewSelected}
+            allAccess={newAllAccess}
+            onAllAccessChange={setNewAllAccess}
+            invalid={flash?.scope ?? false}
           />
         </form>
 
@@ -398,10 +504,10 @@ export function GrantedAccessPage() {
                     <td>{row.email}</td>
                     <td>{row.expires_at}</td>
                     <td className="admin-grant-cats">
-                      {row.categories === null ? (
-                        'All categories'
+                      {row.access_type === 'all' ? (
+                        'All (full access)'
                       ) : (
-                        <span title={row.categories.join(', ')}>{row.categories.join(', ')}</span>
+                        <span title={row.categories?.join(', ')}>{row.categories?.join(', ')}</span>
                       )}
                     </td>
                     <td>
@@ -459,6 +565,8 @@ export function GrantedAccessPage() {
               categoryNames={categoryNames}
               selected={editSelected}
               onChange={setEditSelected}
+              allAccess={editAllAccess}
+              onAllAccessChange={setEditAllAccess}
             />
             <div className="admin-modal-actions">
               <button

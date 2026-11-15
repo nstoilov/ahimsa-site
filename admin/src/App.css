@@ -289,6 +289,29 @@
   border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
+.admin-notice-error {
+  background-color: rgba(248, 113, 113, 0.14);
+  color: #ff8b8b;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+/* Inline spinner shown in busy buttons (e.g. "Grant access"). */
+.admin-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: admin-spin 0.7s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .admin-topnav {
   display: flex;
   align-items: center;
@@ -468,11 +491,6 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   padding-bottom: 0.6rem;
-}
-
-.admin-check input {
-  width: 1.1rem;
-  height: 1.1rem;
 }
 
 .admin-field input[type="file"] {
@@ -1282,6 +1300,52 @@
   gap: 0.75rem;
 }
 
+/* "Пълен достъп" toggle + "Select categories" button on one row. */
+.admin-category-scope-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.admin-category-scope-all {
+  margin-top: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.03);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.admin-category-scope-all:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.admin-category-scope-all:has(input:checked) {
+  border-color: rgba(74, 222, 128, 0.45);
+  background-color: rgba(74, 222, 128, 0.08);
+}
+
+.admin-category-scope-all-hint {
+  font-size: 0.8rem;
+}
+
+.admin-category-scope-toggle {
+  margin-top: 0;
+}
+
+.admin-category-scope-toggle-active {
+  border-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.admin-category-scope-grid-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .admin-category-scope-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1290,12 +1354,32 @@
 }
 
 .admin-category-scope-item {
-  padding-bottom: 0;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.03);
   font-size: 0.9rem;
+  cursor: pointer;
 }
 
-.admin-category-scope-item input {
-  accent-color: rgba(255, 255, 255, 0.55);
+.admin-category-scope-item:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.admin-category-scope-item:has(input:checked) {
+  border-color: rgba(74, 222, 128, 0.45);
+  background-color: rgba(74, 222, 128, 0.08);
+}
+
+/* Single line per item — all chips share the same height; the full name
+   shows in the label's title tooltip when truncated. */
+.admin-category-scope-item span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-category-scope-hint {
@@ -1310,10 +1394,55 @@
   word-break: break-word;
 }
 
+/* Match the row's inputs: same height (padding + font-size + border) and
+   same font size for the label. */
+/* Exactly two states: green when email + duration + category are all valid,
+   grey otherwise (including hover). No admin-button-success here — its hover
+   rule would override the grey state. */
+.admin-grant-submit,
+.admin-grant-submit:hover:not(:disabled) {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #4ade80;
+  border-color: #4ade80;
+}
+
+/* While granting (spinner) the fields are still filled — stays green. */
+.admin-grant-submit:disabled {
+  opacity: 1;
+  background-color: #4ade80;
+  border-color: #4ade80;
+  color: #ffffff;
+}
+
+/* Grey until validation passes — hover matches .admin-button:hover specificity
+   (0,3,0) and comes later in the file, so it wins. */
+.admin-grant-submit-inactive,
+.admin-grant-submit-inactive:hover:not(:disabled) {
+  background-color: #6b7280;
+  border-color: #6b7280;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Red border flash on invalid fields after a failed submit attempt. */
+@keyframes admin-flash-red {
+  50% {
+    border-color: #f87171;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.25);
+  }
+}
+
+.admin-flash {
+  animation: admin-flash-red 0.4s ease-in-out 2;
+}
+
 .admin-expiry-picker {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
 }
 
 .admin-expiry-picker select {
@@ -1335,9 +1464,20 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-.admin-expiry-picker input[type='date'] {
-  flex: 0 0 auto;
-  width: 10rem;
+/* Invisible but rendered (showPicker() requires it) so the calendar button can
+   open the native date picker without showing a second input field. Anchored
+   below the toggle so the picker popover appears in the right place. */
+.admin-expiry-picker .admin-date-input-hidden {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .admin-calendar-toggle {
@@ -1355,8 +1495,7 @@
   cursor: pointer;
 }
 
-.admin-calendar-toggle:hover,
-.admin-calendar-toggle-active {
+.admin-calendar-toggle:hover {
   border-color: rgba(255, 255, 255, 0.4);
   background-color: rgba(255, 255, 255, 0.1);
 }
@@ -1381,4 +1520,58 @@
   .admin-color-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Global custom checkboxes — one consistent size everywhere.
+   Unchecked: dark square with subtle border. Checked: green square, white checkmark.
+   Kept last so it overrides form-level input rules (.admin-field input,
+   .admin-new-category input) at equal specificity. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+input[type='checkbox']::before {
+  content: '';
+  width: 0.7rem;
+  height: 0.7rem;
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+  background-color: #ffffff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type='checkbox']:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+input[type='checkbox']:checked {
+  border-color: #4ade80;
+  background-color: #4ade80;
+}
+
+input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+input[type='checkbox']:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

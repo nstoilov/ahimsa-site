@@ -1,20 +1,33 @@
 import { supabase } from './supabase'
 
-// granted_access: email -> expires_at (+ optional category scope). A
-// logged-in app user whose email is in this table gets subscriber access
-// while today <= expires_at (the check runs in the mobile app).
-// `categories` is null => ALL categories (full subscriber access, same as a
-// subscription); a non-empty array => only entries in those categories are
-// unlocked. Emails are stored lowercase (normalized on write; RLS compares
-// case-insensitively as a safety net).
+// granted_access: email -> expires_at (+ access scope). A logged-in app user
+// whose email is in this table gets subscriber access while
+// today <= expires_at (the check runs in the mobile app).
+//
+// access_type = 'all'         => full access to everything (same as a
+//                                subscription; categories is NULL)
+// access_type = 'categories'  => only entries whose category is listed in
+//                                categories are unlocked.
+// Emails are stored lowercase (normalized on write; RLS compares
+// case-insensitively as a safety net)..
+
+export type AccessType = 'all' | 'categories'
 
 export type GrantedAccess = {
   email: string
   expires_at: string
+  access_type: AccessType
   categories: string[] | null
   granted_by: string | null
   created_at: string
 }
+
+export type AccessScope = {
+  access_type: AccessType
+  categories: string[] | null
+}
+
+export const FULL_ACCESS: AccessScope = { access_type: 'all', categories: null }
 
 export async function fetchGrantedAccess(): Promise<GrantedAccess[]> {
   const { data, error } = await supabase
@@ -28,7 +41,7 @@ export async function fetchGrantedAccess(): Promise<GrantedAccess[]> {
 export async function saveGrantedAccess(
   email: string,
   expiresAt: string,
-  categories: string[] | null,
+  scope: AccessScope,
   grantedBy: string,
 ): Promise<GrantedAccess> {
   const { data, error } = await supabase
@@ -36,7 +49,8 @@ export async function saveGrantedAccess(
     .upsert({
       email: email.trim().toLowerCase(),
       expires_at: expiresAt,
-      categories,
+      access_type: scope.access_type,
+      categories: scope.access_type === 'all' ? null : scope.categories,
       granted_by: grantedBy,
     })
     .select()
